@@ -1,6 +1,7 @@
 public class Studente {
     private String nome;
     private String cognome;
+    private String numeroTelefono;
 
     public Studente(String nome, String cognome) {
         this.nome = nome;
