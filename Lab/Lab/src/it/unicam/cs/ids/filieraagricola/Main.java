@@ -10,8 +10,7 @@ public class Main {
         SystemManager system = SystemManager.getInstance();
 
         // Input file: each line represents a request (e.g., "login john 12345")
-        String filePath = "input.txt";  // <-- change this to your file path
-
+        String filePath = "input.txt";  
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
