@@ -1,6 +1,7 @@
 package it.unicam.cs.ids.filieraagricola.service;
 
 import it.unicam.cs.ids.filieraagricola.model.Content;
+import it.unicam.cs.ids.filieraagricola.service.exception.ContentNotFoundException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,23 @@ public class ContentService {
     }
 
 
-    public boolean approveContent(Content content) {
-        // TODO: Aggiungi logica
+    public boolean approveContent(int id) throws ContentNotFoundException {
+        // Searching for the content
+        Content content = null;
+        for (Content c: contentList) {
+            if (c.getId() == id) {
+                content = c;
+            }
+        }
+        if (content == null) {
+            throw new ContentNotFoundException();
+        }
+        // Approve the content
+        if (content.isState()) {
+            return false;
+        }
+        // find the content and approve it
+        content.setState(true);
         return true;
     }
 

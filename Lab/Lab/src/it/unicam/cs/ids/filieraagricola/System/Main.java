@@ -25,7 +25,7 @@ public class Main {
             String line;
             while ((line = br.readLine()) != null) {
                 // Create a FormatRequest from the line
-                FormatRequest request = new FormatRequest(line);
+                FormatRequest request = new FormatRequest(line.trim()); 
 
                 // Send the request to the system
                 system.handleRequest(request);
