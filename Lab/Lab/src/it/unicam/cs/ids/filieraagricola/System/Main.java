@@ -1,8 +1,18 @@
-package it.unicam.cs.ids.filieraagricola;
+package it.unicam.cs.ids.filieraagricola.System;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+
+/**
+ * Main method:
+ * - gets the singleton instance of SystemManager,
+ * - reads the input file line by line,
+ * - creates a FormatRequest for each line and sends it to the system,
+ * - prints the currently logged user after each request,
+ * - handles file reading errors.
+ */
+
 
 public class Main {
     public static void main(String[] args) {
@@ -10,7 +20,7 @@ public class Main {
         SystemManager system = SystemManager.getInstance();
 
         // Input file: each line represents a request (e.g., "login john 12345")
-        String filePath = "input.txt";  
+        String filePath = "input.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {

@@ -1,12 +1,22 @@
-package it.unicam.cs.ids.filieraagricola;
+package it.unicam.cs.ids.filieraagricola.System;
+
+/**
+ * SystemManager class:
+ * - implemented as a Singleton (only one instance exists),
+ * - manages the current logged user (session state),
+ * - handles incoming requests by dispatching them to the correct action,
+ * - supports login with credentials or anonymous login,
+ * - provides access to the currently logged user.
+ */
 
 public class SystemManager {
-    private static SystemManager instance;
+    private static SystemManager instance; // unique global instance
     private LoggedUser loggedUser; // current session state
 
     // Private constructor -> singleton
     private SystemManager() {}
 
+    // Static method to get the Instance
     public static SystemManager getInstance() {
         if (instance == null) {
             instance = new SystemManager();
@@ -14,7 +24,7 @@ public class SystemManager {
         return instance;
     }
 
-    // Handles a request
+    // Handles a request and check for the login
     public void handleRequest(FormatRequest request) {
         switch (request.getMethod()) {
             case "login":

@@ -1,4 +1,4 @@
-package it.unicam.cs.ids.filieraagricola;
+package it.unicam.cs.ids.filieraagricola.System;
 
 public class LoggedUser {
     private User user;
