@@ -1,4 +1,4 @@
-package it.unicam.cs.ids.filieraagricola.System;
+package it.unicam.cs.ids.filieraagricola.system;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -18,14 +18,14 @@ public class Main {
     public static void main(String[] args) {
         // Get the singleton instance of the system
         SystemManager system = SystemManager.getInstance();
-
+        SystemManagerConfigurator.configure();
         // Input file: each line represents a request (e.g., "login john 12345")
         String filePath = "input.txt";
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             String line;
             while ((line = br.readLine()) != null) {
                 // Create a FormatRequest from the line
-                FormatRequest request = new FormatRequest(line.trim()); 
+                FormatRequest request = new FormatRequest(line.trim());
 
                 // Send the request to the system
                 system.handleRequest(request);
