@@ -1,4 +1,9 @@
-package it.unicam.cs.ids.filieraagricola.System;
+package it.unicam.cs.ids.filieraagricola.system;
+
+import it.unicam.cs.ids.filieraagricola.service.ContentService;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * SystemManager class:
@@ -12,9 +17,14 @@ package it.unicam.cs.ids.filieraagricola.System;
 public class SystemManager {
     private static SystemManager instance; // unique global instance
     private LoggedUser loggedUser; // current session state
+    private Map<String, SystemAction> systemActions;
+    private ContentService contentService;
 
     // Private constructor -> singleton
-    private SystemManager() {}
+    private SystemManager() {
+        systemActions = new HashMap<>();
+        contentService = new ContentService();
+    }
 
     // Static method to get the Instance
     public static SystemManager getInstance() {
@@ -24,24 +34,19 @@ public class SystemManager {
         return instance;
     }
 
+    public void addMap(String key, SystemAction systemAction) {
+        systemActions.put(key, systemAction);
+    }
+
     // Handles a request and check for the login
     public void handleRequest(FormatRequest request) {
-        switch (request.getMethod()) {
-            case "login":
-                if (request.getParams().length == 2) {
-                    login(request.getParams()[0], request.getParams()[1]);
-                } else {
-                    System.out.println("Insufficient parameters for login");
-                }
-                break;
-
-            case "anonymousLogin":
-                anonymousLogin();
-                break;
-
-            default:
-                System.out.println("Unknown method: " + request.getMethod());
+        if (!systemActions.containsKey(request.getMethod())) {
+            //aggiungi eccezione
+            return;
         }
+        SystemAction action = systemActions.get(request.getMethod());
+        action.handleRequest(request);
+
     }
 
     public void login(String name, String password) {
@@ -61,5 +66,13 @@ public class SystemManager {
 
     public LoggedUser getLoggedUser() {
         return loggedUser;
+    }
+
+    public ContentService getContentService() {
+        return contentService;
+    }
+
+    public String[] getPermissions() {
+        return this.loggedUser.getUser().getPermissions();
     }
 }
