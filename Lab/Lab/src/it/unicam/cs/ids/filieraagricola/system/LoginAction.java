@@ -1,5 +1,9 @@
 package it.unicam.cs.ids.filieraagricola.system;
 
+/*
+* Login with username and password
+ */
+
 public class LoginAction implements SystemAction {
     @Override
     public void handleRequest(FormatRequest request) {

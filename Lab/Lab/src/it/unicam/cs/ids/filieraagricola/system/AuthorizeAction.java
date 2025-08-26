@@ -1,5 +1,11 @@
 package it.unicam.cs.ids.filieraagricola.system;
 
+/*
+* DECORATOR + STRATEGY
+* Wraps another SystemAction and, before executing it,
+* checks if the user has all required permissions
+ */
+
 public class AuthorizeAction implements SystemAction {
 
 
