@@ -32,18 +32,21 @@ public record Content(
         description = description.trim();
     }
 
-    public static Content create(String name, String description) {}
+    public static Content create(String name, String description) {
+        String id = generateId(name);
+        return new Content(id, name, description, ContentState.PENDING);
+    }
 
     public boolean isApproved() {
-        return false;
+        return state == ContentState.APPROVED;
     }
 
     public boolean isPending() {
-        return false;
+        return state == ContentState.PENDING;
     }
 
     public boolean isRejected() {
-        return false;
+        return state == ContentState.REJECTED;
     }
 
     private static void validateId(String id){
@@ -69,5 +72,4 @@ public record Content(
                 .replaceAll("\\s+", "_")
                 .toLowerCase();
     }
-
 }
