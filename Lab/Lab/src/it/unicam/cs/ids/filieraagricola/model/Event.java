@@ -63,7 +63,7 @@ public record Event(
      * @return true if the event is in the future
      */
     public boolean isUpcoming() {
-        return false;
+        return dateTime.isAfter(LocalDateTime.now());
     }
 
     /**
@@ -72,7 +72,7 @@ public record Event(
      * @return true if the event date is in the past
      */
     public boolean isPast() {
-        return false;
+        return dateTime.isBefore(LocalDateTime.now());
     }
 
     /**
