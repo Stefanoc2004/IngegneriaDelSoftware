@@ -1,5 +1,6 @@
 package it.unicam.cs.ids.filieraagricola.system;
 
+import it.unicam.cs.ids.filieraagricola.model.User;
 import it.unicam.cs.ids.filieraagricola.service.ContentService;
 
 import java.util.HashMap;
