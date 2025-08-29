@@ -2,118 +2,169 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import java.util.Objects;
 
-/**
- * Represents a content item within the agricultural platform.
- * Each content can be related to products, supply chains, or events,
- * and must be validated/approved before publication.
- *
- * @param id unique identifier for the content
- * @param name title of the content
- * @param description detailed description
- * @param state current approval state of the content
- */
-public record Content(
-        String id,
-        String name,
-        String description,
-        ContentState state
-) {
+public class Content implements Prototype<Content> {
 
     /**
-     * Compact constructor for validation and normalization.
+     * Unique identifier for the content
      */
-    public Content {
-        validateId(id);
-        validateName(name);
-        validateDescription(description);
-        Objects.requireNonNull(state, "Content state cannot be null");
+    private String id;
 
-        name = name.trim();
-        description = description.trim();
+    /**
+     * Title/name of the content
+     */
+    private String name;
+
+    /**
+     * Detailed description of the content
+     */
+    private String description;
+
+    /**
+     * Current approval state of the content
+     */
+    private ContentState state;
+
+    /**
+     * Default constructor for prototype pattern.
+     * Creates a new Content instance with PENDING state.
+     * All other fields are initialized to null and should be set
+     * using the appropriate setter methods.
+     */
+    public Content() {
+        this.state = ContentState.PENDING;
     }
 
-    /**
-     * Factory method to create a new Content in PENDING state.
-     *
-     * @param name content title
-     * @param description content description
-     * @return a new validated Content instance
-     */
-    public static Content create(String name, String description) {
-        String id = generateId(name);
-        return new Content(id, name, description, ContentState.PENDING);
+    public Content(String id, String name, String description, ContentState state) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.state = state;
+        validate();
+        normalize();
     }
 
-    /**
-     * Checks if content is approved.
-     * @return true if state == APPROVED
-     */
+    public Content(Content other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Content to copy cannot be null");
+        }
+        this.id = other.id;
+        this.name = other.name;
+        this.description = other.description;
+        this.state = other.state;
+    }
+
+    @Override
+    public Content clone() {
+        return new Content(this);
+    }
+
     public boolean isApproved() {
         return state == ContentState.APPROVED;
     }
 
-    /**
-     * Checks if content is pending approval.
-     * @return true if state == PENDING
-     */
     public boolean isPending() {
         return state == ContentState.PENDING;
     }
 
-    /**
-     * Checks if content is rejected.
-     * @return true if state == REJECTED
-     */
     public boolean isRejected() {
         return state == ContentState.REJECTED;
     }
 
+    private void validate() {
+        if (id != null) validateId(id);
+        if (name != null) validateName(name);
+        if (description != null) validateDescription(description);
+        Objects.requireNonNull(state, "Content state cannot be null");
+    }
 
-    /**
-     * Validates that the content ID is not null or empty.
-     *
-     * @param id the identifier to validate
-     * @throws IllegalArgumentException if the ID is null or empty
-     */
-    private static void validateId(String id){
-        if (id == null || id.trim().isEmpty()){
-            throw new IllegalArgumentException("Content ID cannot be null or empty");
+    private void normalize() {
+        if (name != null) {
+            name = name.trim();
+        }
+        if (description != null) {
+            description = description.trim();
         }
     }
 
-    /**
-     * Validates that the content name is not null or empty
-     * @param name the name to validate
-     * @throws IllegalArgumentException if the name is null or empty
-     */
+    private static void validateId(String id) {
+        if (id.trim().isEmpty()) {
+            throw new IllegalArgumentException("Content ID cannot be empty");
+        }
+    }
+
     private static void validateName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Content name cannot be null or empty");
+        if (name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Content name cannot be empty");
         }
     }
 
-    /**
-     * Validates that the content description is not null or empty.
-     *
-     * @param description the description to validate
-     * @throws IllegalArgumentException if the description is null or empty
-     */
-    private static void validateDescription(String description){
-        if (description == null || description.trim().isEmpty()){
-            throw new IllegalArgumentException("Content description cannot be null or empty");
+    private static void validateDescription(String description) {
+        if (description.trim().isEmpty()) {
+            throw new IllegalArgumentException("Content description cannot be empty");
         }
     }
 
+    public String getId() {
+        return id;
+    }
 
-    /**
-     * Generates a unique identifier for the content based on its name and the current timestamp.
-     *
-     * @param base the base string used for generating the identifier
-     * @return a normalized unique identifier
-     */
-    private static String generateId(String base) {
-        return (base + "_" + System.currentTimeMillis())
-                .replaceAll("\\s+", "_")
-                .toLowerCase();
+    public void setId(String id) {
+        this.id = id;
+        if (id != null) validateId(id);
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+        if (name != null) {
+            validateName(name);
+            this.name = name.trim();
+        }
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+        if (description != null) {
+            validateDescription(description);
+            this.description = description.trim();
+        }
+    }
+
+    public ContentState getState() {
+        return state;
+    }
+
+    public void setState(ContentState state) {
+        Objects.requireNonNull(state, "Content state cannot be null");
+        this.state = state;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Content content = (Content) o;
+        return Objects.equals(id, content.id);
+    }
+
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Content{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", state=" + state +
+                '}';
     }
 }
