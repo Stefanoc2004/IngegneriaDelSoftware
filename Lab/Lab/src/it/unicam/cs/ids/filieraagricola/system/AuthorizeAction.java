@@ -1,5 +1,8 @@
 package it.unicam.cs.ids.filieraagricola.system;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class AuthorizeAction implements SystemAction {
 
 
@@ -14,11 +17,18 @@ public class AuthorizeAction implements SystemAction {
     @Override
     public void handleRequest(FormatRequest request) {
         SystemManager system = SystemManager.getInstance();
-        String[] permissions = system.getPermissions();
-        //TODO verificare se i permessi richiesti dall'azione esistono nei permessi dell'utente, se non esistono non viene eseguita nessun azione
-        boolean approve = true;
-        if (approve){
+        String[] userPermissionsArray = system.getPermissions();
+        List<String> userPermissionsList = Arrays.asList(userPermissionsArray);
+        boolean isAuthorized = true;
+        for (String requiredPermission : this.permissions) {
+            if (!userPermissionsList.contains(requiredPermission)) {
+                isAuthorized = false;
+            }
+        }
+        if (isAuthorized) {
             this.systemAction.handleRequest(request);
+        } else {
+            return;
         }
     }
 }
