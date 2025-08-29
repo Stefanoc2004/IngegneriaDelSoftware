@@ -1,3 +1,5 @@
+package it.unicam.cs.ids.filieraagricola.model;
+
 import java.time.LocalDate;
 import java.util.Objects;
 
