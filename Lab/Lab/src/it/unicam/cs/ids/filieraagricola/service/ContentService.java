@@ -5,6 +5,7 @@ import it.unicam.cs.ids.filieraagricola.service.exception.ContentNotFoundExcepti
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class ContentService {
 
@@ -44,9 +45,15 @@ public class ContentService {
     }
 
 
-    public void showSocialContent() {
-        // TODO: Aggiungi logica
+    public List<Content> showSocialContent() {
+        List<Content> approvedContent = this.contentList.stream()
+                .filter(Content::isState)
+                .collect(Collectors.toList());
 
+        if (approvedContent.isEmpty()) {
+            return null;
+        }
+        return approvedContent;
     }
 
 
