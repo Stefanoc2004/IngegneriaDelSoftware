@@ -7,15 +7,12 @@ import java.util.Objects;
  * Represents an agricultural product within the supply chain platform.
  *
  * <p>This class is a plain Java object (POJO) which implements the Prototype
- * pattern via {@link #copy()}. It exposes a no-arg constructor (for
+ * pattern via {@link #clone()}. It exposes a no-arg constructor (for
  * frameworks), a full parameterized constructor, a copy constructor and
  * validated setters/getters. All public and private methods are documented in
  * English to guarantee clarity and maintainability.</p>
- *
- * @author Agricultural Platform Team
- * @version 1.0
  */
-public class Product implements Prototype<Product> {
+public class Product implements Prototype {
 
     private String id;
     private String name;
@@ -100,7 +97,7 @@ public class Product implements Prototype<Product> {
      * @return a new Product instance that is a copy of this instance
      */
     @Override
-    public Product copy() {
+    public Product clone() {
         return new Product(this);
     }
 

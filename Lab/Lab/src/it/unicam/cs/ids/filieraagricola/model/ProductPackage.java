@@ -8,11 +8,9 @@ import java.util.Objects;
 /**
  * Represents a package (bundle) of products in the agricultural supply chain.
  *
- * <p>This class implements the Prototype pattern via {@link #copy()} to allow
- * cloning. Collections are defensively copied on set/construct and {@link #getProducts()}
- * returns an unmodifiable view to preserve encapsulation.</p>
+ * <p>Implements {@link Prototype} and supports defensive copying of contained products.</p>
  */
-public class ProductPackage implements Prototype<ProductPackage> {
+public class ProductPackage implements Prototype {
 
     private String name;
     private List<Product> products;
@@ -50,7 +48,7 @@ public class ProductPackage implements Prototype<ProductPackage> {
         // create defensive copy of products
         this.products = new ArrayList<>();
         if (other.products != null) {
-            other.products.forEach(p -> this.products.add(p == null ? null : p.copy()));
+            other.products.forEach(p -> this.products.add(p == null ? null : p.clone()));
         }
     }
 
@@ -60,7 +58,7 @@ public class ProductPackage implements Prototype<ProductPackage> {
      * @return a new ProductPackage that duplicates this instance
      */
     @Override
-    public ProductPackage copy() {
+    public ProductPackage clone() {
         return new ProductPackage(this);
     }
 
@@ -100,7 +98,7 @@ public class ProductPackage implements Prototype<ProductPackage> {
 
     /**
      * Sets the products list for this package. Performs defensive copying and
-     * uses {@link Product#copy()} for each element to avoid sharing references.
+     * uses {@link Product#clone()} for each element to avoid sharing references.
      *
      * @param products list of products (must not be null)
      * @throws IllegalArgumentException if products is null
@@ -112,7 +110,7 @@ public class ProductPackage implements Prototype<ProductPackage> {
         // defensive deep copy using Prototype.copy()
         List<Product> copy = new ArrayList<>(products.size());
         for (Product p : products) {
-            copy.add(p == null ? null : p.copy());
+            copy.add(p == null ? null : p.clone());
         }
         this.products = copy;
     }
@@ -123,7 +121,7 @@ public class ProductPackage implements Prototype<ProductPackage> {
      * @param product product to add (may be null)
      */
     public void addProduct(Product product) {
-        this.products.add(product == null ? null : product.copy());
+        this.products.add(product == null ? null : product.clone());
     }
 
     /**
