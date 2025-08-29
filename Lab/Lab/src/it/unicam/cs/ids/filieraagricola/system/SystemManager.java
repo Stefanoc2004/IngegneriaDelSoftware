@@ -2,6 +2,7 @@ package it.unicam.cs.ids.filieraagricola.system;
 
 import it.unicam.cs.ids.filieraagricola.model.User;
 import it.unicam.cs.ids.filieraagricola.service.ContentService;
+import it.unicam.cs.ids.filieraagricola.service.UserService;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,7 @@ public class SystemManager {
     private LoggedUser loggedUser; // current session state
     private Map<String, SystemAction> systemActions;
     private ContentService contentService;
+    private UserService userService;
 
     // Private constructor -> singleton
     private SystemManager() {
@@ -72,6 +74,8 @@ public class SystemManager {
     public ContentService getContentService() {
         return contentService;
     }
+
+    public UserService getUserService() { return userService;}
 
     public String[] getPermissions() {
         return this.loggedUser.getUser().getPermissions();
