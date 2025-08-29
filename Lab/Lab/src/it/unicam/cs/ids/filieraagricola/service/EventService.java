@@ -13,15 +13,15 @@ import java.util.stream.Collectors;
 /**
  * Service responsible for managing events and participations.
  *
- * <p>This service stores defensive copies of mutable domain objects when possible.
- * If a domain object implements {@link Prototype}, a {@code clone()} is performed
- * before storing or returning instances. All public methods return defensive views
- * to preserve encapsulation.</p>
+ * <p>This service applies defensive copying when possible: if an object implements
+ * {@link Prototype} it will be cloned (via {@code clone()}) before being stored
+ * or returned. Collections returned by this service are unmodifiable to preserve
+ * encapsulation.</p>
  */
 public class EventService {
 
-    private List<Event> eventList;
-    private List<Participation> participationList;
+    private final List<Event> eventList;
+    private final List<Participation> participationList;
 
     /**
      * Constructs an EventService with empty internal storage.
@@ -32,36 +32,34 @@ public class EventService {
     }
 
     /**
-     * Organizes (adds) a new event to the system.
-     * If {@code event} implements {@link Prototype} the stored instance is a clone
-     * to prevent external mutations; otherwise the instance is stored as provided.
+     * Organizes (adds) a new event to the system. A defensive copy is stored
+     * if the provided event implements {@link Prototype}.
      *
-     * @param event event to organize; must not be null
+     * @param event event to organize (must not be null)
      * @throws IllegalArgumentException if event is null
      */
     public void organizeEvent(Event event) {
-        requireNonNullEvent(event);
+        Objects.requireNonNull(event, "Event cannot be null");
         this.eventList.add(copyEvent(event));
     }
 
     /**
-     * Books a participation for an event.
-     * If {@code participation} implements {@link Prototype} a cloned instance is stored.
+     * Books a participation for an event. A defensive copy is stored if the
+     * provided participation implements {@link Prototype}.
      *
-     * @param participation participation to store; must not be null
+     * @param participation participation to book (must not be null)
      * @throws IllegalArgumentException if participation is null
      */
     public void bookEvent(Participation participation) {
-        requireNonNullParticipation(participation);
+        Objects.requireNonNull(participation, "Participation cannot be null");
         this.participationList.add(copyParticipation(participation));
     }
 
     /**
-     * Returns a defensive list of managed events. Each element is a clone if the
-     * original type implements {@link Prototype}; otherwise the original instance
-     * is returned (assumed immutable).
+     * Returns an unmodifiable list of currently stored events.
+     * Each returned element is a clone when possible.
      *
-     * @return unmodifiable list of events (defensive copy)
+     * @return unmodifiable list of events (defensive copies when applicable)
      */
     public List<Event> getEventList() {
         List<Event> copies = this.eventList.stream()
@@ -74,22 +72,22 @@ public class EventService {
      * Replaces the internal event list with a defensive copy of the provided list.
      * Each element is cloned if it implements {@link Prototype}.
      *
-     * @param eventList new event list (must not be null)
+     * @param eventList new list of events (must not be null)
      * @throws IllegalArgumentException if eventList is null
      */
     public void setEventList(List<Event> eventList) {
         if (eventList == null) throw new IllegalArgumentException("Event list cannot be null");
-        this.eventList = eventList.stream()
+        this.eventList.clear();
+        this.eventList.addAll(eventList.stream()
                 .map(this::copyEvent)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     /**
-     * Returns a defensive list of participations. Each element is cloned if the
-     * original type implements {@link Prototype}; otherwise the original instance
-     * is returned (assumed immutable).
+     * Returns an unmodifiable list of stored participations.
+     * Each returned element is a clone when possible.
      *
-     * @return unmodifiable list of participations (defensive copy)
+     * @return unmodifiable list of participations (defensive copies when applicable)
      */
     public List<Participation> getParticipationList() {
         List<Participation> copies = this.participationList.stream()
@@ -101,7 +99,7 @@ public class EventService {
     /**
      * Legacy/Italian-named getter preserved for compatibility.
      *
-     * @return unmodifiable list of participations (defensive copy)
+     * @return unmodifiable list of participations (defensive copies when applicable)
      * @deprecated prefer {@link #getParticipationList()}
      */
     @Deprecated
@@ -117,11 +115,11 @@ public class EventService {
      * @throws IllegalArgumentException if participationList is null
      */
     public void setParticipationList(List<Participation> participationList) {
-        if (participationList == null)
-            throw new IllegalArgumentException("Participation list cannot be null");
-        this.participationList = participationList.stream()
+        if (participationList == null) throw new IllegalArgumentException("Participation list cannot be null");
+        this.participationList.clear();
+        this.participationList.addAll(participationList.stream()
                 .map(this::copyParticipation)
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
     }
 
     /**
@@ -138,7 +136,7 @@ public class EventService {
     // ----------------- private helpers -----------------
 
     /**
-     * Returns a defensive copy of the provided Event if it implements Prototype,
+     * Returns a defensive copy of the provided Event if it implements {@link Prototype};
      * otherwise returns the original instance (assumed immutable).
      *
      * @param event event to copy
@@ -146,14 +144,13 @@ public class EventService {
      */
     private Event copyEvent(Event event) {
         if (event instanceof Prototype) {
-            // clone() returns Prototype; cast to Event (covariant clone allowed in implementations)
             return (Event) ((Prototype) event).clone();
         }
         return event;
     }
 
     /**
-     * Returns a defensive copy of the provided Participation if it implements Prototype,
+     * Returns a defensive copy of the provided Participation if it implements {@link Prototype};
      * otherwise returns the original instance (assumed immutable).
      *
      * @param participation participation to copy
@@ -164,25 +161,5 @@ public class EventService {
             return (Participation) ((Prototype) participation).clone();
         }
         return participation;
-    }
-
-    /**
-     * Validates that the provided Event is not null.
-     *
-     * @param event event to validate
-     * @throws IllegalArgumentException if event is null
-     */
-    private void requireNonNullEvent(Event event) {
-        if (event == null) throw new IllegalArgumentException("Event cannot be null");
-    }
-
-    /**
-     * Validates that the provided Participation is not null.
-     *
-     * @param participation participation to validate
-     * @throws IllegalArgumentException if participation is null
-     */
-    private void requireNonNullParticipation(Participation participation) {
-        if (participation == null) throw new IllegalArgumentException("Participation cannot be null");
     }
 }
