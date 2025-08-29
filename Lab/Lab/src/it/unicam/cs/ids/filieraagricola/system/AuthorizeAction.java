@@ -2,6 +2,11 @@ package it.unicam.cs.ids.filieraagricola.system;
 
 import java.util.Arrays;
 import java.util.List;
+/*
+* DECORATOR + STRATEGY
+* Wraps another SystemAction and, before executing it,
+* checks if the user has all required permissions
+ */
 
 public class AuthorizeAction implements SystemAction {
 

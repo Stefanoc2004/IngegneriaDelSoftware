@@ -3,6 +3,10 @@ package it.unicam.cs.ids.filieraagricola.system;
 import it.unicam.cs.ids.filieraagricola.service.ContentService;
 import it.unicam.cs.ids.filieraagricola.service.exception.ContentNotFoundException;
 
+/*
+* Approves a content item identified by its ID
+ */
+
 public class ApproveContentAction implements SystemAction {
 
     @Override

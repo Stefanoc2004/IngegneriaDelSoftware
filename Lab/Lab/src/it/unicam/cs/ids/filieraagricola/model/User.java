@@ -1,4 +1,4 @@
-package it.unicam.cs.ids.filieraagricola.system;
+package it.unicam.cs.ids.filieraagricola.model;
 
 public class User {
     private int id;
