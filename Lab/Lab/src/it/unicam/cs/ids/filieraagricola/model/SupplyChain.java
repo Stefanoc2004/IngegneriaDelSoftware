@@ -5,34 +5,55 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Represents an agricultural supply chain (filiera) within the platform.
- * This immutable record encapsulates the supply chain information including
- * associated products, actors, and traceability data.
+ * Represents a supply chain (filiera) within the platform.
  *
- * @param id unique identifier for the supply chain
- * @param name the name of the supply chain
- * @param description detailed description of the supply chain
- * @param products list of products associated with this supply chain
- * @param creationDate when this supply chain was created
- * @param territorialArea the geographical area covered by this supply chain
+ * <p>This class implements the Prototype pattern through {@link #clone()} and
+ * applies defensive copying for internal collections. Getters return unmodifiable
+ * views and setters perform validation and defensive copying to preserve
+ * encapsulation.</p>
  *
  * @author Agricultural Platform Team
  * @version 1.0
  */
-public record SupplyChain(
-        String id,
-        String name,
-        String description,
-        List<Product> products,
-        LocalDateTime creationDate,
-        String territorialArea
-) {
+public class SupplyChain implements Prototype{
+
+    private String id;
+    private String name;
+    private String description;
+    private List<Product> products;
+    private LocalDateTime creationDate;
+    private String territorialArea;
 
     /**
-     * Compact constructor for validation and immutability.
-     * Ensures all required fields are valid and creates defensive copies.
+     * Default constructor for frameworks. Initializes products to an empty list
+     * and creationDate to {@link LocalDateTime#now()}.
      */
-    public SupplyChain {
+    public SupplyChain() {
+        this.products = new ArrayList<>();
+        this.creationDate = LocalDateTime.now();
+        this.territorialArea = "default";
+        this.name = "unnamed";
+        this.description = "";
+        this.id = generateId(this.name, this.territorialArea);
+    }
+
+    /**
+     * Full constructor validating all fields and creating defensive copies.
+     *
+     * @param id              unique identifier, must be non-null and non-empty
+     * @param name            supply chain name, must be non-null and non-empty
+     * @param description     supply chain description, must be non-null and non-empty
+     * @param products        list of associated products, must be non-null
+     * @param creationDate    creation timestamp, must be non-null
+     * @param territorialArea territorial area, must be non-null and non-empty
+     * @throws IllegalArgumentException if any required parameter is invalid
+     */
+    public SupplyChain(String id,
+                       String name,
+                       String description,
+                       List<Product> products,
+                       LocalDateTime creationDate,
+                       String territorialArea) {
         validateId(id);
         validateName(name);
         validateDescription(description);
@@ -40,145 +61,302 @@ public record SupplyChain(
         validateCreationDate(creationDate);
         validateTerritorialArea(territorialArea);
 
-        // Create defensive copy of mutable list
-        products = products == null ? List.of() : List.copyOf(products);
-
-        // Normalize strings
-        name = name.trim();
-        description = description.trim();
-        territorialArea = territorialArea.trim();
+        this.id = id.trim();
+        this.name = name.trim();
+        this.description = description.trim();
+        // defensive deep-copy of products using Product.copy()
+        this.products = new ArrayList<>(products.size());
+        for (Product p : products) {
+            this.products.add(p == null ? null : p.clone());
+        }
+        this.creationDate = creationDate;
+        this.territorialArea = territorialArea.trim();
     }
 
     /**
-     * Constructor with minimal parameters - used by SupplyChainService
+     * Convenience constructor used by services: generates id and sets defaults.
+     *
+     * @param name     supply chain name, must be non-null and non-empty
+     * @param products associated products (must not be null)
      */
     public SupplyChain(String name, List<Product> products) {
-        this(
-                generateId(name, "default"),
+        this(generateId(name, "default"),
                 name,
                 "Supply chain for " + name,
-                products,
+                products == null ? Collections.emptyList() : products,
                 LocalDateTime.now(),
-                "default"
-        );
+                "default");
     }
 
     /**
-     * Creates a new SupplyChain with validated parameters.
-     * Factory method that ensures proper object construction.
+     * Copy constructor used to implement the Prototype pattern.
      *
-     * @param name the supply chain name
-     * @param description supply chain description
-     * @param products list of associated products
-     * @param territorialArea geographical area
-     * @return a new validated SupplyChain instance
+     * @param other the SupplyChain instance to copy, must not be null
+     * @throws NullPointerException if {@code other} is null
      */
-    public static SupplyChain create(String name, String description,
-                                     List<Product> products, String territorialArea) {
-        var id = generateId(name, territorialArea);
-        var creationDate = LocalDateTime.now();
-        return new SupplyChain(id, name, description, products, creationDate, territorialArea);
+    public SupplyChain(SupplyChain other) {
+        Objects.requireNonNull(other, "SupplyChain to copy cannot be null");
+        this.id = other.id;
+        this.name = other.name;
+        this.description = other.description;
+        this.creationDate = other.creationDate;
+        this.territorialArea = other.territorialArea;
+        this.products = new ArrayList<>();
+        if (other.products != null) {
+            other.products.forEach(p -> this.products.add(p == null ? null : p.clone()));
+        }
     }
 
     /**
-     * Gets the name of the supply chain.
-     * @return the supply chain name
+     * Creates and returns a copy of this SupplyChain instance.
+     *
+     * @return a new SupplyChain that is a copy of this instance
+     */
+    @Override
+    public SupplyChain clone() {
+        return new SupplyChain(this);
+    }
+
+    /**
+     * Returns the unique identifier of the supply chain.
+     *
+     * @return supply chain id
+     */
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Sets the unique identifier of the supply chain. Validates input.
+     *
+     * @param id id to set (must be non-null and non-empty)
+     * @throws IllegalArgumentException if id is null or empty
+     */
+    public void setId(String id) {
+        validateId(id);
+        this.id = id.trim();
+    }
+
+    /**
+     * Returns the name of the supply chain.
+     *
+     * @return supply chain name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Returns the number of products in this supply chain.
+     * Sets the name of the supply chain. Validates and normalizes input.
      *
-     * @return the count of products
+     * @param name supply chain name (must be non-null and non-empty)
+     * @throws IllegalArgumentException if name is null or empty
+     */
+    public void setName(String name) {
+        validateName(name);
+        this.name = name.trim();
+    }
+
+    /**
+     * Returns the description of the supply chain.
+     *
+     * @return description string
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * Sets the description of the supply chain. Validates input.
+     *
+     * @param description description text (must be non-null and non-empty)
+     * @throws IllegalArgumentException if description is null or empty
+     */
+    public void setDescription(String description) {
+        validateDescription(description);
+        this.description = description.trim();
+    }
+
+    /**
+     * Returns an unmodifiable view of the products associated with this supply chain.
+     * The returned list contains the internal Product instances; callers should
+     * treat them as read-only or the service layer should return copies where needed.
+     *
+     * @return unmodifiable list of products
+     */
+    public List<Product> getProducts() {
+        return Collections.unmodifiableList(products);
+    }
+
+    /**
+     * Sets the list of products for this supply chain. Performs defensive copying
+     * by calling {@link Product#clone()} on each element.
+     *
+     * @param products list of products (must not be null)
+     * @throws IllegalArgumentException if products is null
+     */
+    public void setProducts(List<Product> products) {
+        validateProducts(products);
+        List<Product> copy = new ArrayList<>(products.size());
+        for (Product p : products) {
+            copy.add(p == null ? null : p.clone());
+        }
+        this.products = copy;
+    }
+
+    /**
+     * Returns the creation timestamp of the supply chain.
+     *
+     * @return creation date/time
+     */
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    /**
+     * Sets the creation timestamp. Validates input.
+     *
+     * @param creationDate creation timestamp (must not be null)
+     * @throws IllegalArgumentException if creationDate is null
+     */
+    public void setCreationDate(LocalDateTime creationDate) {
+        validateCreationDate(creationDate);
+        this.creationDate = creationDate;
+    }
+
+    /**
+     * Returns the territorial area associated with this supply chain.
+     *
+     * @return territorial area string
+     */
+    public String getTerritorialArea() {
+        return territorialArea;
+    }
+
+    /**
+     * Sets the territorial area. Validates and normalizes input.
+     *
+     * @param territorialArea territorial area (must be non-null and non-empty)
+     * @throws IllegalArgumentException if territorialArea is null or empty
+     */
+    public void setTerritorialArea(String territorialArea) {
+        validateTerritorialArea(territorialArea);
+        this.territorialArea = territorialArea.trim();
+    }
+
+    /**
+     * Returns the number of products associated with this supply chain.
+     *
+     * @return product count
      */
     public int getProductCount() {
-        return products.size();
+        return products == null ? 0 : products.size();
     }
 
     /**
-     * Checks if this supply chain contains a specific product.
+     * Checks whether the supply chain contains the specified product.
+     * Equality relies on {@link Product#equals(Object)} (typically id-based).
      *
-     * @param product the product to search for
-     * @return true if the product is found
+     * @param product product to check (may be null)
+     * @return true if contained, false otherwise
      */
     public boolean containsProduct(Product product) {
-        return products.contains(product);
+        return products != null && products.contains(product);
     }
 
     /**
-     * Gets all organic products in this supply chain.
+     * Returns a list of organic products. Each returned element is a defensive copy.
      *
-     * @return a list of organic products
+     * @return unmodifiable list of copies of organic products
      */
     public List<Product> getOrganicProducts() {
-        return products.stream()
+        List<Product> result = products.stream()
+                .filter(Objects::nonNull)
                 .filter(Product::isOrganic)
-                .toList();
+                .map(Product::clone)
+                .collect(Collectors.toList());
+        return Collections.unmodifiableList(result);
     }
 
     /**
-     * Gets all certified products in this supply chain.
+     * Returns a list of certified products. Each returned element is a defensive copy.
      *
-     * @return a list of certified products
+     * @return unmodifiable list of copies of certified products
      */
     public List<Product> getCertifiedProducts() {
-        return products.stream()
+        List<Product> result = products.stream()
+                .filter(Objects::nonNull)
                 .filter(Product::hasCertifications)
-                .toList();
+                .map(Product::clone)
+                .collect(Collectors.toList());
+        return Collections.unmodifiableList(result);
     }
 
     /**
-     * Gets products by category.
+     * Returns products that match the provided category. Returned elements are copies.
      *
-     * @param category the category to filter by
-     * @return a list of products in the specified category
+     * @param category category to filter by (case-insensitive)
+     * @return unmodifiable list of copies of matching products; empty list if category invalid
      */
     public List<Product> getProductsByCategory(String category) {
         if (category == null || category.trim().isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
-
-        return products.stream()
-                .filter(product -> product.category().equalsIgnoreCase(category.trim()))
-                .toList();
+        String normalized = category.trim().toLowerCase();
+        List<Product> result = products.stream()
+                .filter(Objects::nonNull)
+                .filter(p -> p.getCategory() != null && p.getCategory().toLowerCase().equals(normalized))
+                .map(Product::clone)
+                .collect(Collectors.toList());
+        return Collections.unmodifiableList(result);
     }
 
     /**
-     * Gets fresh products (produced within last 30 days).
+     * Returns products considered "fresh" (produced within the last 30 days).
+     * Each returned product is a defensive copy.
      *
-     * @return a list of fresh products
+     * @return unmodifiable list of copies of fresh products
      */
     public List<Product> getFreshProducts() {
-        return products.stream()
+        List<Product> result = products.stream()
+                .filter(Objects::nonNull)
                 .filter(Product::isFresh)
-                .toList();
+                .map(Product::clone)
+                .collect(Collectors.toList());
+        return Collections.unmodifiableList(result);
     }
 
     /**
-     * Checks if this supply chain is active (has products and recent activity).
+     * Checks whether this supply chain is active. Active is defined as having at least
+     * one product and a creation date not older than 6 months.
      *
-     * @return true if the supply chain is considered active
+     * @return true if active, false otherwise
      */
     public boolean isActive() {
-        return !products.isEmpty() &&
-                creationDate.isAfter(LocalDateTime.now().minusMonths(6));
+        return products != null && !products.isEmpty()
+                && creationDate.isAfter(LocalDateTime.now().minusMonths(6));
     }
 
     /**
-     * Gets unique categories of products in this supply chain.
+     * Returns the set of unique product categories present in this supply chain.
      *
-     * @return a set of unique categories
+     * @return unmodifiable set of category strings
      */
     public Set<String> getUniqueCategories() {
-        return products.stream()
-                .map(Product::category)
+        Set<String> set = products.stream()
+                .map(Product::getCategory)
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
+        return Collections.unmodifiableSet(set);
     }
 
+    // ----------------- private validation helpers -----------------
+
     /**
-     * Validates the supply chain ID is not null or empty.
+     * Validates the supply chain id parameter.
+     *
+     * @param id candidate id
+     * @throws IllegalArgumentException if id is null or empty
      */
     private static void validateId(String id) {
         if (id == null || id.trim().isEmpty()) {
@@ -187,7 +365,10 @@ public record SupplyChain(
     }
 
     /**
-     * Validates the supply chain name is not null or empty.
+     * Validates the supply chain name parameter.
+     *
+     * @param name candidate name
+     * @throws IllegalArgumentException if name is null or empty
      */
     private static void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
@@ -196,7 +377,10 @@ public record SupplyChain(
     }
 
     /**
-     * Validates the supply chain description is not null or empty.
+     * Validates the supply chain description parameter.
+     *
+     * @param description candidate description
+     * @throws IllegalArgumentException if description is null or empty
      */
     private static void validateDescription(String description) {
         if (description == null || description.trim().isEmpty()) {
@@ -205,7 +389,10 @@ public record SupplyChain(
     }
 
     /**
-     * Validates the products list is not null.
+     * Validates the products list parameter.
+     *
+     * @param products candidate products list
+     * @throws IllegalArgumentException if products is null
      */
     private static void validateProducts(List<Product> products) {
         if (products == null) {
@@ -214,7 +401,10 @@ public record SupplyChain(
     }
 
     /**
-     * Validates the creation date is not null.
+     * Validates the creation date parameter.
+     *
+     * @param creationDate candidate creation timestamp
+     * @throws IllegalArgumentException if creationDate is null
      */
     private static void validateCreationDate(LocalDateTime creationDate) {
         if (creationDate == null) {
@@ -223,7 +413,10 @@ public record SupplyChain(
     }
 
     /**
-     * Validates the territorial area is not null or empty.
+     * Validates the territorial area parameter.
+     *
+     * @param area candidate territorial area
+     * @throws IllegalArgumentException if area is null or empty
      */
     private static void validateTerritorialArea(String area) {
         if (area == null || area.trim().isEmpty()) {
@@ -232,11 +425,56 @@ public record SupplyChain(
     }
 
     /**
-     * Generates a unique ID based on name and territorial area.
+     * Generates a unique id string using name and area plus a timestamp.
+     *
+     * @param name supply chain name
+     * @param area territorial area
+     * @return generated id string
      */
     private static String generateId(String name, String area) {
         return (name + "_" + area + "_" + System.currentTimeMillis())
                 .replaceAll("\\s+", "_")
                 .toLowerCase();
+    }
+
+    // ----------------- equals/hashCode/toString -----------------
+
+    /**
+     * Equality is based on {@code id} when present.
+     *
+     * @param o other object
+     * @return true if both SupplyChain have the same id
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        SupplyChain that = (SupplyChain) o;
+        return id != null && id.equals(that.id);
+    }
+
+    /**
+     * Hash code based on {@code id}.
+     *
+     * @return hash code integer (0 if id null)
+     */
+    @Override
+    public int hashCode() {
+        return id == null ? 0 : id.hashCode();
+    }
+
+    /**
+     * Compact string representation with key identifying fields.
+     *
+     * @return brief textual representation
+     */
+    @Override
+    public String toString() {
+        return "SupplyChain{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", productsCount=" + (products == null ? 0 : products.size()) +
+                '}';
     }
 }
