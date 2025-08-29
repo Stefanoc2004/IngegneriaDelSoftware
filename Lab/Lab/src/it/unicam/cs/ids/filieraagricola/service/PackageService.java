@@ -10,7 +10,7 @@ import java.util.stream.Collectors;
  * Service responsible for managing product packages in the agricultural supply chain.
  *
  * <p>This service applies defensive copying using the Prototype pattern: every Product
- * stored internally is a copy created via {@code Product.copy()} to avoid accidental
+ * stored internally is a copy created via {@code Product.clone()} to avoid accidental
  * external mutations. Public collections returned by this service are unmodifiable.</p>
  *
  * <p>All public and important private methods are documented in English.</p>
@@ -94,7 +94,7 @@ public class PackageService {
 
         // Defensive copy of each Product using Prototype
         List<Product> copied = newProducts.stream()
-                .map(Product::copy)
+                .map(Product::clone)
                 .collect(Collectors.toList());
 
         packageItem.setProducts(copied);
@@ -134,7 +134,7 @@ public class PackageService {
      */
     private ProductPackage buildPackage(String name, List<Product> products) {
         List<Product> copies = products.stream()
-                .map(Product::copy)
+                .map(Product::clone)
                 .collect(Collectors.toList());
         return new ProductPackage(name, copies);
     }
