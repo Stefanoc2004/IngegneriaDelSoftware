@@ -12,7 +12,7 @@ import java.util.Objects;
  * <p>This class implements the Prototype pattern via {@link Prototype#clone()}
  * so services can defensively copy instances when storing or returning them.</p>
  */
-public class Participation implements Prototype {
+public class Participation implements Prototype<Participation> {
 
     private String id;
     private String eventId;

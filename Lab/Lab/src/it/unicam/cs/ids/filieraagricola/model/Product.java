@@ -12,7 +12,7 @@ import java.util.Objects;
  * validated setters/getters. All public and private methods are documented in
  * English to guarantee clarity and maintainability.</p>
  */
-public class Product implements Prototype {
+public class Product implements Prototype<Product> {
 
     private String id;
     private String name;

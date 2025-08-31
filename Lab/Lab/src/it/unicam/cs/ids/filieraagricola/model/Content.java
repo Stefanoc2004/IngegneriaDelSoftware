@@ -14,7 +14,7 @@ import java.util.Objects;
  * <p>This class implements the Prototype pattern, allowing for easy
  * creation of new content instances by cloning existing ones.</p>
  */
-public class Content implements Prototype {
+public class Content implements Prototype<Content> {
 
     /**
      * Unique identifier for the content

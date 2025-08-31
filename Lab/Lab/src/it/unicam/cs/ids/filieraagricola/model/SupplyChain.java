@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  * @author Agricultural Platform Team
  * @version 1.0
  */
-public class SupplyChain implements Prototype{
+public class SupplyChain implements Prototype<SupplyChain> {
 
     private String id;
     private String name;

@@ -13,7 +13,7 @@ import java.util.Objects;
  * callers and services can perform defensive copying when storing or returning
  * Event objects.</p>
  */
-public class Event implements Prototype {
+public class Event implements Prototype<Event> {
 
     private String id;
     private String title;

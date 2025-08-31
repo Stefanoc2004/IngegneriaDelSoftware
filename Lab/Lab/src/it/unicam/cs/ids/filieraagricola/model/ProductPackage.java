@@ -10,7 +10,7 @@ import java.util.Objects;
  *
  * <p>Implements {@link Prototype} and supports defensive copying of contained products.</p>
  */
-public class ProductPackage implements Prototype {
+public class ProductPackage implements Prototype<ProductPackage> {
 
     private String name;
     private List<Product> products;

@@ -13,7 +13,7 @@ import java.util.Objects;
  * <p>Equality is primarily based on {@code id} when present (non-zero),
  * otherwise falls back to {@code email} if available.</p>
  */
-public class User implements Prototype {
+public class User implements Prototype<User> {
 
     private int id;
     private String name;
