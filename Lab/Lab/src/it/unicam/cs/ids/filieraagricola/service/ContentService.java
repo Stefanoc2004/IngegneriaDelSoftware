@@ -2,42 +2,41 @@ package it.unicam.cs.ids.filieraagricola.service;
 
 import it.unicam.cs.ids.filieraagricola.model.Content;
 import it.unicam.cs.ids.filieraagricola.model.ContentState;
-import it.unicam.cs.ids.filieraagricola.model.Prototype;
 import it.unicam.cs.ids.filieraagricola.service.exception.ContentNotFoundException;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
- * Service class for managing agricultural platform content.
+ * Service class for managing content items in the agricultural platform.
  *
- * <p>The service applies defensive-copying when possible: if a Content instance
- * implements {@link Prototype} it will be cloned prior to being stored or returned.
- * If Content is immutable the same instance may be stored/returned.</p>
+ * <p>This service uses defensive copying: whenever a {@link Content} is stored
+ * or returned, a clone of the object is used so that internal state is never
+ * exposed to callers. The implementation expects {@link Content#clone()} to
+ * return a deep copy (Prototype pattern).</p>
  */
 public class ContentService {
 
     private final List<Content> contentList;
 
     /**
-     * Constructs a new ContentService with an empty content list.
+     * Constructs an empty ContentService.
      */
     public ContentService() {
         this.contentList = new ArrayList<>();
     }
 
     /**
-     * Creates and stores a new content item in the service.
-     * If the provided content implements {@link Prototype} a clone is stored.
+     * Stores a content item in the service.
      *
-     * @param content the content item to be added (must not be null)
-     * @return true if the content was successfully added
-     * @throws IllegalArgumentException if content is null
+     * <p>The stored instance is a defensive copy (clone) of the provided object.</p>
+     *
+     * @param content the content to store (must not be null)
+     * @return {@code true} if the content was added successfully
+     * @throws NullPointerException if {@code content} is null
      */
     public boolean createContent(Content content) {
         Objects.requireNonNull(content, "Content cannot be null");
@@ -45,26 +44,29 @@ public class ContentService {
     }
 
     /**
-     * Approves a content item identified by its numeric ID.
-     * Backwards-compatible helper that converts numeric id to string.
+     * Approves a content item identified by a numeric identifier.
      *
-     * @param numericId numeric identifier of content to approve
-     * @return true if the content was newly approved, false if already approved
-     * @throws ContentNotFoundException if no content exists with the specified ID
+     * <p>Compatibility helper that converts the numeric id to string and delegates
+     * to {@link #approveContentById(String)}.</p>
+     *
+     * @param numericId the numeric id of the content to approve
+     * @return {@code true} if the content was newly approved, {@code false} if it was already approved
+     * @throws ContentNotFoundException if no content with the given id exists
      */
     public boolean approveContent(int numericId) throws ContentNotFoundException {
         return approveContentById(String.valueOf(numericId));
     }
 
     /**
-     * Approves a content item identified by its string ID.
-     * If the content is found and not already approved, replaces the stored
-     * instance with an APPROVED instance (stored defensively).
+     * Approves a content item identified by its string identifier.
      *
-     * @param id string identifier of the content to approve (must not be null)
-     * @return true if the content was newly approved, false if already approved
-     * @throws ContentNotFoundException if no content exists with the specified ID
-     * @throws IllegalArgumentException if id is null
+     * <p>If the content is found and not already in {@link ContentState#APPROVED},
+     * the stored instance is replaced by a defensively-copied APPROVED instance.</p>
+     *
+     * @param id the string identifier of the content to approve (must not be null)
+     * @return {@code true} if the content transitioned to APPROVED; {@code false} if it was already approved
+     * @throws NullPointerException      if {@code id} is null
+     * @throws ContentNotFoundException  if no content with the given id exists
      */
     public boolean approveContentById(String id) throws ContentNotFoundException {
         Objects.requireNonNull(id, "Content id cannot be null");
@@ -100,23 +102,24 @@ public class ContentService {
     }
 
     /**
-     * Retrieves all approved content suitable for social media publishing.
-     * Returned list contains defensive copies when possible.
+     * Returns all approved contents suitable for social media.
      *
-     * @return unmodifiable list containing copies of approved content items
+     * <p>Each returned element is a clone (defensive copy) and the returned list
+     * is produced with {@code Stream.toList()} (modern, effectively unmodifiable).</p>
+     *
+     * @return list of approved content clones (empty list if none)
      */
     public List<Content> showSocialContent() {
-        List<Content> result = this.contentList.stream()
+        return contentList.stream()
                 .filter(Content::isApproved)
                 .map(this::copyContent)
-                .collect(Collectors.toList());
-        return Collections.unmodifiableList(result);
+                .toList();
     }
 
     /**
-     * Legacy version of social content retrieval that returns null if none exist.
+     * Legacy method that returns approved content or {@code null} if none exist.
      *
-     * @return list of approved content items or null if none exist
+     * @return list of approved content clones, or {@code null} if none exist
      */
     public List<Content> showSocialContentLegacy() {
         List<Content> approvedContent = showSocialContent();
@@ -124,11 +127,11 @@ public class ContentService {
     }
 
     /**
-     * Finds a content item by its unique identifier.
+     * Finds a content by its string identifier.
      *
-     * @param id content id to search for (must not be null)
-     * @return Optional containing a defensive copy of the content if found
-     * @throws IllegalArgumentException if id is null
+     * @param id the content id to search for (must not be null)
+     * @return Optional containing a defensive copy of the found content or empty if not found
+     * @throws NullPointerException if {@code id} is null
      */
     public Optional<Content> findContentById(String id) {
         Objects.requireNonNull(id, "Content id cannot be null");
@@ -139,11 +142,11 @@ public class ContentService {
     }
 
     /**
-     * Counts the number of content items in a specific approval state.
+     * Counts how many contents are in a given {@link ContentState}.
      *
-     * @param state content state to count (must not be null)
-     * @return number of content items in the specified state
-     * @throws IllegalArgumentException if state is null
+     * @param state the state to count (must not be null)
+     * @return the number of contents in the specified state
+     * @throws NullPointerException if {@code state} is null
      */
     public long countContentsByState(ContentState state) {
         Objects.requireNonNull(state, "ContentState cannot be null");
@@ -153,72 +156,65 @@ public class ContentService {
     }
 
     /**
-     * Retrieves all content items that are pending approval.
+     * Returns all pending content items as defensive copies.
      *
-     * @return unmodifiable list of pending content items (defensive copies when applicable)
+     * @return list of pending content clones (empty if none)
      */
     public List<Content> getPendingContent() {
-        List<Content> result = contentList.stream()
+        return contentList.stream()
                 .filter(Content::isPending)
                 .map(this::copyContent)
-                .collect(Collectors.toList());
-        return Collections.unmodifiableList(result);
+                .toList();
     }
 
     /**
-     * Retrieves all content items that have been rejected.
+     * Returns all rejected content items as defensive copies.
      *
-     * @return unmodifiable list of rejected content items (defensive copies when applicable)
+     * @return list of rejected content clones (empty if none)
      */
     public List<Content> getRejectedContent() {
-        List<Content> result = contentList.stream()
+        return contentList.stream()
                 .filter(Content::isRejected)
                 .map(this::copyContent)
-                .collect(Collectors.toList());
-        return Collections.unmodifiableList(result);
+                .toList();
     }
 
     /**
-     * Returns a defensive copy of the internal content list.
+     * Returns a defensive copy of the entire internal content list.
      *
-     * @return new list containing defensive copies of all managed content items
+     * @return list containing clones of all managed contents
      */
     public List<Content> getContentList() {
-        return Collections.unmodifiableList(
-                contentList.stream()
-                        .map(this::copyContent)
-                        .collect(Collectors.toList())
-        );
+        return contentList.stream()
+                .map(this::copyContent)
+                .toList();
     }
 
     /**
-     * Replaces the internal content list with a defensive copy of the provided list.
-     * Each element is cloned if it implements {@link Prototype}.
+     * Replaces the internal content storage with a defensive copy of the provided list.
      *
      * @param newContentList new content list (must not be null)
-     * @throws IllegalArgumentException if newContentList is null
+     * @throws IllegalArgumentException if {@code newContentList} is null
      */
     public void setContentList(List<Content> newContentList) {
         if (newContentList == null) throw new IllegalArgumentException("Content list cannot be null");
         this.contentList.clear();
-        this.contentList.addAll(newContentList.stream()
+        List<Content> copies = newContentList.stream()
                 .map(this::copyContent)
-                .collect(Collectors.toList()));
+                .toList();
+        this.contentList.addAll(copies);
     }
 
-    // ----------------- private helpers -----------------
+    /* ----------------- private helpers ----------------- */
 
     /**
-     * Returns a cloned Content if it implements {@link Prototype}; otherwise
-     * returns the original instance (assumed immutable).
+     * Returns a defensive copy of the provided content by invoking {@code clone()}.
      *
-     * @param content content to copy
-     * @return cloned or original content
+     * @param content content to copy (may not be null)
+     * @return clone of content
      */
     private Content copyContent(Content content) {
-        if (content instanceof Prototype) {
-            return (Content) ((Prototype) content).clone();
-        }
-        return content;
+        Objects.requireNonNull(content, "Content cannot be null");
+        return content.clone();
     }
 }
