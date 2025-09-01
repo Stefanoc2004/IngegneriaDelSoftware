@@ -5,10 +5,8 @@ import it.unicam.cs.ids.filieraagricola.model.Participation;
 import it.unicam.cs.ids.filieraagricola.model.Prototype;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Service responsible for managing events and participations.
@@ -62,10 +60,9 @@ public class EventService {
      * @return unmodifiable list of events (defensive copies when applicable)
      */
     public List<Event> getEventList() {
-        List<Event> copies = this.eventList.stream()
+        return this.eventList.stream()
                 .map(this::copyEvent)
-                .collect(Collectors.toList());
-        return Collections.unmodifiableList(copies);
+                .toList();
     }
 
     /**
@@ -80,7 +77,7 @@ public class EventService {
         this.eventList.clear();
         this.eventList.addAll(eventList.stream()
                 .map(this::copyEvent)
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     /**
@@ -90,10 +87,9 @@ public class EventService {
      * @return unmodifiable list of participations (defensive copies when applicable)
      */
     public List<Participation> getParticipationList() {
-        List<Participation> copies = this.participationList.stream()
+        return this.participationList.stream()
                 .map(this::copyParticipation)
-                .collect(Collectors.toList());
-        return Collections.unmodifiableList(copies);
+                .toList();
     }
 
     /**
@@ -119,7 +115,7 @@ public class EventService {
         this.participationList.clear();
         this.participationList.addAll(participationList.stream()
                 .map(this::copyParticipation)
-                .collect(Collectors.toList()));
+                .toList());
     }
 
     /**
@@ -143,8 +139,8 @@ public class EventService {
      * @return cloned or original event
      */
     private Event copyEvent(Event event) {
-        if (event instanceof Prototype) {
-            return (Event) ((Prototype) event).clone();
+        if (event instanceof Prototype<?> prototype) {
+            return (Event) prototype.clone();
         }
         return event;
     }
@@ -157,8 +153,8 @@ public class EventService {
      * @return cloned or original participation
      */
     private Participation copyParticipation(Participation participation) {
-        if (participation instanceof Prototype) {
-            return (Participation) ((Prototype) participation).clone();
+        if (participation instanceof Prototype<?> prototype) {
+            return (Participation) prototype.clone();
         }
         return participation;
     }
