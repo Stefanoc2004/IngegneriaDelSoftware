@@ -11,6 +11,7 @@ public class SystemManagerConfigurator {
         system.addMap("create_product", new AuthorizeAction(new CreateProductAction(), "products_manage"));
         system.addMap("register_event", new AuthorizeAction(new RegisterForEventAction(), "events_participate"));
         system.addMap("distributor_create_package", new AuthorizeAction(new DistributorCreatePackageAction(), "distributor_rights"));
+        system.addMap("admin_approve_registration", new AuthorizeAction(new ApproveRegistrationAction(), "admin_manage_registrations"));
 
     }
 }
