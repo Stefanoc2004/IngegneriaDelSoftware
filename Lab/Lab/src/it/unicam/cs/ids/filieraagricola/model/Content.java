@@ -1,6 +1,7 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 import java.util.Objects;
+import java.util.UUID; // Added import for UUID
 
 /**
  * Represents a content item within the agricultural platform.
@@ -17,7 +18,7 @@ import java.util.Objects;
 public class Content implements Prototype<Content> {
 
     /**
-     * Unique identifier for the content
+     * Unique identifier for the content. Automatically generated if not provided.
      */
     private String id;
 
@@ -38,27 +39,28 @@ public class Content implements Prototype<Content> {
 
     /**
      * Default constructor for prototype pattern.
-     * Creates a new Content instance with PENDING state.
+     * Creates a new Content instance with a generated ID and PENDING state.
      * All other fields are initialized to null and should be set
      * using the appropriate setter methods.
      */
     public Content() {
+        this.id = UUID.randomUUID().toString(); // Automatically generate ID
         this.state = ContentState.PENDING;
     }
 
     /**
      * Constructor with all parameters.
      * Creates a fully initialized Content instance with validation
-     * and normalization of input parameters.
+     * and normalization of input parameters. If the ID is null or empty, a new one is generated.
      *
-     * @param id unique identifier for the content, must not be null or empty
+     * @param id unique identifier for the content, if null or empty, a new UUID will be generated
      * @param name title of the content, must not be null or empty
      * @param description detailed description, must not be null or empty
      * @param state current approval state, must not be null
      * @throws IllegalArgumentException if any validation fails
      */
     public Content(String id, String name, String description, ContentState state) {
-        this.id = id;
+        this.id = (id == null || id.trim().isEmpty()) ? UUID.randomUUID().toString() : id.trim(); // Ensure ID is always set and trimmed
         this.name = name;
         this.description = description;
         this.state = state;
@@ -129,7 +131,9 @@ public class Content implements Prototype<Content> {
      * @throws IllegalArgumentException if any validation fails
      */
     private void validate() {
-        if (id != null) validateId(id);
+        // ID is now always generated or provided, so it should not be null or empty here.
+        // If it was possible for ID to be null/empty after construction, validateId(id) would be needed.
+        // For now, we assume it's valid due to constructor logic.
         if (name != null) validateName(name);
         if (description != null) validateDescription(description);
         Objects.requireNonNull(state, "Content state cannot be null");
@@ -155,8 +159,8 @@ public class Content implements Prototype<Content> {
      * @throws IllegalArgumentException if the ID is empty
      */
     private static void validateId(String id) {
-        if (id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Content ID cannot be empty");
+        if (id == null || id.trim().isEmpty()) { // Added null check for robustness
+            throw new IllegalArgumentException("Content ID cannot be null or empty");
         }
     }
 
@@ -167,8 +171,8 @@ public class Content implements Prototype<Content> {
      * @throws IllegalArgumentException if the name is empty
      */
     private static void validateName(String name) {
-        if (name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Content name cannot be empty");
+        if (name == null || name.trim().isEmpty()) { // Added null check for robustness
+            throw new IllegalArgumentException("Content name cannot be null or empty");
         }
     }
 
@@ -179,15 +183,15 @@ public class Content implements Prototype<Content> {
      * @throws IllegalArgumentException if the description is empty
      */
     private static void validateDescription(String description) {
-        if (description.trim().isEmpty()) {
-            throw new IllegalArgumentException("Content description cannot be empty");
+        if (description == null || description.trim().isEmpty()) { // Added null check for robustness
+            throw new IllegalArgumentException("Content description cannot be null or empty");
         }
     }
 
     /**
      * Returns the unique identifier of this content.
      *
-     * @return the content ID, may be null if not set
+     * @return the content ID, never null after construction
      */
     public String getId() {
         return id;
@@ -195,14 +199,14 @@ public class Content implements Prototype<Content> {
 
     /**
      * Sets the unique identifier for this content.
-     * The ID is validated to ensure it's not empty if provided.
+     * The ID is validated to ensure it's not null or empty if provided.
      *
      * @param id the content identifier to set
-     * @throws IllegalArgumentException if id is not null but empty
+     * @throws IllegalArgumentException if id is null or empty after trimming
      */
     public void setId(String id) {
-        this.id = id;
-        if (id != null) validateId(id);
+        validateId(id); // Validate even if null is passed, to throw exception
+        this.id = id.trim();
     }
 
     /**
@@ -219,14 +223,11 @@ public class Content implements Prototype<Content> {
      * The name is validated and normalized (trimmed) if provided.
      *
      * @param name the content name to set
-     * @throws IllegalArgumentException if name is not null but empty after trimming
+     * @throws IllegalArgumentException if name is null or empty after trimming
      */
     public void setName(String name) {
-        this.name = name;
-        if (name != null) {
-            validateName(name);
-            this.name = name.trim();
-        }
+        validateName(name); // Validate even if null is passed, to throw exception
+        this.name = name.trim();
     }
 
     /**
@@ -243,14 +244,11 @@ public class Content implements Prototype<Content> {
      * The description is validated and normalized (trimmed) if provided.
      *
      * @param description the content description to set
-     * @throws IllegalArgumentException if description is not null but empty after trimming
+     * @throws IllegalArgumentException if description is null or empty after trimming
      */
     public void setDescription(String description) {
-        this.description = description;
-        if (description != null) {
-            validateDescription(description);
-            this.description = description.trim();
-        }
+        validateDescription(description); // Validate even if null is passed, to throw exception
+        this.description = description.trim();
     }
 
     /**
