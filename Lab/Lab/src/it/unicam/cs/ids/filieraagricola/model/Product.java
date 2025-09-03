@@ -2,6 +2,7 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import java.time.LocalDate;
 import java.util.Objects;
+import java.util.UUID; // Added import for UUID
 
 /**
  * Represents an agricultural product within the supply chain platform.
@@ -25,18 +26,20 @@ public class Product implements Prototype<Product> {
 
     /**
      * Default no-argument constructor for frameworks (e.g., Spring, JPA).
+     * Generates a unique ID for the product.
      *
-     * <p>Leaves fields uninitialized (null). Use setters to populate fields or
+     * <p>Leaves other fields uninitialized (null). Use setters to populate fields or
      * use the parameterized constructor for validated construction.</p>
      */
     public Product() {
-        // intentionally empty for framework compatibility
+        this.id = UUID.randomUUID().toString(); // Automatically generate ID
     }
 
     /**
      * Full constructor that validates and normalizes input values.
+     * If the ID is null or empty, a new one is generated.
      *
-     * @param id                unique identifier for the product, must be non-null and non-empty
+     * @param id                unique identifier for the product, if null or empty, a new UUID will be generated
      * @param name              commercial product name, must be non-null and non-empty
      * @param category          product category (e.g., "vegetables"), must be non-null and non-empty
      * @param description       human-readable description, must be non-null and non-empty
@@ -54,7 +57,7 @@ public class Product implements Prototype<Product> {
                    String certifications,
                    LocalDate productionDate,
                    String producerId) {
-        validateId(id);
+        this.id = (id == null || id.trim().isEmpty()) ? UUID.randomUUID().toString() : id.trim(); // Ensure ID is always set and trimmed
         validateName(name);
         validateCategory(category);
         validateDescription(description);
@@ -62,7 +65,6 @@ public class Product implements Prototype<Product> {
         validateProductionDate(productionDate);
         validateProducerId(producerId);
 
-        this.id = id.trim();
         this.name = name.trim();
         this.category = category.toLowerCase().trim();
         this.description = description.trim();
@@ -104,7 +106,7 @@ public class Product implements Prototype<Product> {
     /**
      * Returns the product id.
      *
-     * @return product id
+     * @return product id, never null after construction
      */
     public String getId() {
         return id;
