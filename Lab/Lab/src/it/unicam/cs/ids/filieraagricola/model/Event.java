@@ -2,6 +2,7 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
+import java.util.UUID; // Added import for UUID
 
 /**
  * Represents an event within the agricultural supply chain platform.
@@ -24,16 +25,17 @@ public class Event implements Prototype<Event> {
 
     /**
      * Default no-arg constructor for frameworks (e.g. Spring).
-     * Leaves fields uninitialized (null) except when frameworks populate them later.
+     * Generates a unique ID for the event.
      */
     public Event() {
-        // for frameworks
+        this.id = UUID.randomUUID().toString(); // Automatically generate ID
     }
 
     /**
      * Full constructor that validates all provided fields and normalizes strings.
+     * If the ID is null or empty, a new one is generated.
      *
-     * @param id          unique identifier of the event (must not be null/empty)
+     * @param id          unique identifier of the event (if null or empty, a new UUID will be generated)
      * @param title       short descriptive title (must not be null/empty)
      * @param description detailed description (must not be null/empty)
      * @param dateTime    date and time when the event takes place (must not be null and must be >= 2025-01-01)
@@ -47,14 +49,13 @@ public class Event implements Prototype<Event> {
                  LocalDateTime dateTime,
                  String location,
                  String organizerId) {
-        validateId(id);
+        this.id = (id == null || id.trim().isEmpty()) ? UUID.randomUUID().toString() : id.trim(); // Ensure ID is always set and trimmed
         validateTitle(title);
         validateDescription(description);
         validateDateTime(dateTime);
         validateLocation(location);
         validateOrganizerId(organizerId);
 
-        this.id = id.trim();
         this.title = title.trim();
         this.description = description.trim();
         this.dateTime = dateTime;
@@ -91,7 +92,7 @@ public class Event implements Prototype<Event> {
     /**
      * Returns the event identifier.
      *
-     * @return id string
+     * @return id string, never null after construction
      */
     public String getId() {
         return id;
