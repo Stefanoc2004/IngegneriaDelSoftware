@@ -10,5 +10,6 @@ public enum ActorType {
     CURATOR,
     ANIMATOR,
     BUYER,
+    GENERAL_USER,
     PLATFORM_MANAGER
 }
