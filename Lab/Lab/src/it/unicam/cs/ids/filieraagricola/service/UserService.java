@@ -64,13 +64,7 @@ public class UserService {
         }
 
         // Clone the prototype (Prototype pattern)
-        User newUser;
-        if (prototype instanceof Prototype) {
-            newUser = (User) ((Prototype) prototype).clone();
-        } else {
-            // fallback: use copy constructor if prototype is a User
-            newUser = new User(prototype);
-        }
+        User newUser = prototype.clone();
 
         newUser.setName(username);
         newUser.setPassword(password);
@@ -99,7 +93,7 @@ public class UserService {
     public List<User> getUserList() {
         List<User> copies = new ArrayList<>(userList.size());
         for (User u : userList) {
-            copies.add((User) ((Prototype) u).clone());
+            copies.add(u.clone());
         }
         return Collections.unmodifiableList(copies);
     }
@@ -117,7 +111,7 @@ public class UserService {
         return userList.stream()
                 .filter(u -> u.getEmail() != null && u.getEmail().trim().toLowerCase().equals(needle))
                 .findFirst()
-                .map(u -> (User) ((Prototype) u).clone());
+                .map(User::clone);
     }
 
     /**
@@ -152,6 +146,6 @@ public class UserService {
         if (prototypeName == null) throw new IllegalArgumentException("Prototype name cannot be null");
         User proto = prototypes.get(prototypeName.trim());
         if (proto == null) return Optional.empty();
-        return Optional.of((User) ((Prototype) proto).clone());
+        return Optional.of(proto.clone());
     }
 }
