@@ -105,6 +105,16 @@ public abstract class Actor implements Prototype<Actor> {
     }
 
     /**
+     * Creates and returns a copy of this Actor.
+     * This method implements the Prototype pattern by delegating to the copy constructor.
+     * Subclasses must override this method to return their specific type.
+     *
+     * @return a clone of this Actor instance
+     */
+    @Override
+    public abstract Actor clone();
+
+    /**
      * Returns the unique identifier of this actor.
      *
      * @return the actor ID, never null after construction
