@@ -86,7 +86,7 @@ public class UserService {
      * @return new User prototype instance with specified permissions (id = 0, name/email empty)
      */
     public static User makePrototype(String... permissions) {
-        User user = new User(0, "", "", "");
+        User user = new User();
         user.setPermissions(permissions == null ? new String[0] : permissions.clone());
         return user;
     }
@@ -97,7 +97,11 @@ public class UserService {
      * @return unmodifiable list of users
      */
     public List<User> getUserList() {
-        return Collections.unmodifiableList(new ArrayList<>(userList));
+        List<User> copies = new ArrayList<>(userList.size());
+        for (User u : userList) {
+            copies.add((User) ((Prototype) u).clone());
+        }
+        return Collections.unmodifiableList(copies);
     }
 
     /**
@@ -109,8 +113,9 @@ public class UserService {
      */
     public Optional<User> findUserByEmail(String email) {
         if (email == null) throw new IllegalArgumentException("Email cannot be null");
+        String needle = email.trim().toLowerCase();
         return userList.stream()
-                .filter(u -> u.getEmail() != null && u.getEmail().equals(email))
+                .filter(u -> u.getEmail() != null && u.getEmail().trim().toLowerCase().equals(needle))
                 .findFirst()
                 .map(u -> (User) ((Prototype) u).clone());
     }
