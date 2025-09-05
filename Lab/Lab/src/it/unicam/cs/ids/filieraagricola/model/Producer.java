@@ -25,7 +25,7 @@ public class Producer extends Actor {
     /**
      * List of certifications held by this producer
      */
-    private List<String> certifications;
+    // private List<String> certifications;
 
     /**
      * List of product IDs produced by this producer
@@ -50,10 +50,14 @@ public class Producer extends Actor {
         super();
         this.type = ActorType.PRODUCER;
         this.cultivationMethods = new ArrayList<>();
-        this.certifications = new ArrayList<>();
         this.productIds = new ArrayList<>();
         this.farmSizeHectares = 0.0;
         this.establishedYear = 0;
+    }
+
+    @Override
+    public Actor clone() {
+        return null;
     }
 
     /**
@@ -80,7 +84,6 @@ public class Producer extends Actor {
         validateEstablishedYear(establishedYear);
 
         this.cultivationMethods = cultivationMethods != null ? new ArrayList<>(cultivationMethods) : new ArrayList<>();
-        this.certifications = certifications != null ? new ArrayList<>(certifications) : new ArrayList<>();
         this.productIds = new ArrayList<>();
         this.farmSizeHectares = farmSizeHectares;
         this.establishedYear = establishedYear;
@@ -95,21 +98,9 @@ public class Producer extends Actor {
     public Producer(Producer other) {
         super(other);
         this.cultivationMethods = new ArrayList<>(other.cultivationMethods);
-        this.certifications = new ArrayList<>(other.certifications);
         this.productIds = new ArrayList<>(other.productIds);
         this.farmSizeHectares = other.farmSizeHectares;
         this.establishedYear = other.establishedYear;
-    }
-
-    /**
-     * Creates a deep copy of this Producer instance.
-     * This method implements the Prototype pattern.
-     *
-     * @return a new Producer instance that is a copy of this instance
-     */
-    @Override
-    public Producer clone() {
-        return new Producer(this);
     }
 
     /**
@@ -157,50 +148,7 @@ public class Producer extends Actor {
         return cultivationMethods.remove(method.trim().toLowerCase());
     }
 
-    /**
-     * Returns the list of certifications held by this producer.
-     *
-     * @return defensive copy of certifications list
-     */
-    public List<String> getCertifications() {
-        return new ArrayList<>(certifications);
-    }
 
-    /**
-     * Sets the certifications for this producer.
-     *
-     * @param certifications list of certifications (may be null, will be treated as empty)
-     */
-    public void setCertifications(List<String> certifications) {
-        this.certifications = certifications != null ? new ArrayList<>(certifications) : new ArrayList<>();
-    }
-
-    /**
-     * Adds a certification to this producer's certifications.
-     *
-     * @param certification certification to add (must not be null or empty)
-     * @throws IllegalArgumentException if certification is null or empty
-     */
-    public void addCertification(String certification) {
-        if (certification == null || certification.trim().isEmpty()) {
-            throw new IllegalArgumentException("Certification cannot be null or empty");
-        }
-        String normalizedCert = certification.trim();
-        if (!certifications.contains(normalizedCert)) {
-            certifications.add(normalizedCert);
-        }
-    }
-
-    /**
-     * Removes a certification from this producer's certifications.
-     *
-     * @param certification certification to remove
-     * @return true if the certification was removed, false if it wasn't found
-     */
-    public boolean removeCertification(String certification) {
-        if (certification == null) return false;
-        return certifications.remove(certification.trim());
-    }
 
     /**
      * Returns the list of product IDs produced by this producer.
@@ -297,25 +245,6 @@ public class Producer extends Actor {
                 .anyMatch(method -> method.contains("organic") || method.contains("biologico"));
     }
 
-    /**
-     * Checks if this producer has any certifications.
-     *
-     * @return true if the producer has at least one certification
-     */
-    public boolean hasCertifications() {
-        return !certifications.isEmpty();
-    }
-
-    /**
-     * Checks if this producer has a specific certification.
-     *
-     * @param certification certification to check for
-     * @return true if the producer has the specified certification
-     */
-    public boolean hasCertification(String certification) {
-        if (certification == null) return false;
-        return certifications.contains(certification.trim());
-    }
 
     /**
      * Returns the number of products produced by this producer.
@@ -376,7 +305,6 @@ public class Producer extends Actor {
                 ", farmSizeHectares=" + farmSizeHectares +
                 ", establishedYear=" + establishedYear +
                 ", productCount=" + productIds.size() +
-                ", certificationsCount=" + certifications.size() +
                 ", active=" + active +
                 '}';
     }

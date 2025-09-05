@@ -1,6 +1,7 @@
 package it.unicam.cs.ids.filieraagricola.system;
 
 import it.unicam.cs.ids.filieraagricola.model.User;
+import it.unicam.cs.ids.filieraagricola.service.CertificationService;
 import it.unicam.cs.ids.filieraagricola.service.ContentService;
 import it.unicam.cs.ids.filieraagricola.service.UserService;
 
@@ -22,6 +23,7 @@ public class SystemManager {
     private Map<String, SystemAction> systemActions;
     private ContentService contentService;
     private UserService userService;
+    private CertificationService certificationService;
 
     // Private constructor -> singleton
     private SystemManager() {
@@ -80,4 +82,6 @@ public class SystemManager {
     public String[] getPermissions() {
         return this.loggedUser.getUser().getPermissions();
     }
+
+    public CertificationService getCertificationService() { return certificationService; }
 }
