@@ -1,40 +1,48 @@
 package it.unicam.cs.ids.filieraagricola.service;
 
 import it.unicam.cs.ids.filieraagricola.model.User;
+import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.service.exception.ValidationException;
 import it.unicam.cs.ids.filieraagricola.system.UserPrototypeRegistry;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Service responsible for managing user accounts and prototype-based user creation.
  *
- * <p>This service stores and manages registered prototypes (by name). New users can be
- * created by cloning a registered prototype and customizing fields (username, password, email).
+ * <p>This service stores and manages registered prototypes (by name). New users are
+ * created by cloning a registered prototype and customizing fields (name, password, email).
  * The service applies defensive copying when returning collections.</p>
  *
- * <p>All public methods validate inputs and throw IllegalArgumentException for invalid parameters.</p>
+ * <p>This in-memory service assigns incremental ids via an internal {@link AtomicInteger}.
+ * In production, id assignment should be delegated to a persistence layer.</p>
  */
 public class UserService {
 
     private final List<User> userList;
     private final UserPrototypeRegistry registry;
+    private final AtomicInteger idGenerator;
 
     /**
-     * Constructs a new UserService with empty user storage and prototype registry.
+     * Constructs a new UserService with a fresh prototype registry and id generator starting at 1.
      */
     public UserService() {
-        this(new UserPrototypeRegistry());
+        this(new UserPrototypeRegistry(), 1);
     }
 
     /**
-     * Constructs a new UserService with given prototype registry.
+     * Constructs a new UserService with given prototype registry and starting id.
      *
-     * @param registry user prototype registry (must not be null)
-     * @throws NullPointerException if registry is null
+     * @param registry    prototype registry (must not be null)
+     * @param initialId   initial id to use (must be >= 0)
+     * @throws NullPointerException     if registry is null
+     * @throws IllegalArgumentException if initialId < 0
      */
-    public UserService(UserPrototypeRegistry registry) {
+    public UserService(UserPrototypeRegistry registry, int initialId) {
         this.userList = new LinkedList<>();
         this.registry = Objects.requireNonNull(registry, "UserPrototypeRegistry cannot be null");
+        if (initialId < 0) throw new IllegalArgumentException("initialId must be >= 0");
+        this.idGenerator = new AtomicInteger(initialId);
     }
 
     /**
@@ -43,7 +51,7 @@ public class UserService {
      *
      * @param prototypeName unique name for the prototype (must not be null/empty)
      * @param prototype     prototype User instance (must not be null)
-     * @throws IllegalArgumentException if inputs invalid
+     * @throws ValidationException if inputs invalid
      */
     public void registerPrototype(String prototypeName, User prototype) {
         registry.registerPrototype(prototypeName, prototype);
@@ -55,10 +63,11 @@ public class UserService {
      * @param prototypeName name of the registered prototype (must exist)
      * @param username      display name for the new user (must not be null/empty)
      * @param password      password for the new user (must not be null/empty)
-     * @param email         email for the new user (must not be null/empty)
-     * @throws IllegalArgumentException if inputs invalid or prototype not found
+     * @param email         email for the new user (must not be null/empty and unique)
+     * @return the created User instance (defensive clone)
+     * @throws ValidationException if inputs invalid or prototype not found or email already used
      */
-    public void createUser(String prototypeName, String username, String password, String email) {
+    public User createUser(String prototypeName, String username, String password, String email) {
         if (prototypeName == null || prototypeName.trim().isEmpty())
             throw new ValidationException("Prototype name cannot be null or empty");
         if (username == null || username.isBlank())
@@ -68,24 +77,42 @@ public class UserService {
         if (email == null || email.isBlank())
             throw new ValidationException("Email cannot be null or empty");
 
+        // Ensure unique email (case-insensitive)
+        String normalizedEmail = email.trim().toLowerCase();
+        if (userList.stream()
+                .anyMatch(u -> u.getEmail() != null && u.getEmail().trim().toLowerCase().equals(normalizedEmail))) {
+            throw new ValidationException("Email already registered: " + email);
+        }
+
         // Obtain a cloned prototype (throws NotFoundException if missing)
         User newUser = registry.getPrototypeOrThrow(prototypeName);
 
+        // customize fields
         newUser.setName(username);
+        // Note: password should be hashed in production; here we accept raw string per simplified model
         newUser.setPassword(password);
         newUser.setEmail(email);
 
+        // assign id using in-memory generator
+        newUser.setId(idGenerator.getAndIncrement());
+
         this.userList.add(newUser);
+
+        // return defensive clone
+        return newUser.clone();
     }
 
     /**
-     * Convenience factory to create a reusable prototype with pre-filled permissions.
+     * Convenience factory to create a reusable prototype with pre-filled permissions and role.
      *
+     * @param role        role to assign to the prototype (not null)
      * @param permissions permission strings to assign to the prototype
      * @return new User prototype instance with specified permissions (id = 0, name/email empty)
      */
-    public static User makePrototype(String... permissions) {
+    public static User makePrototype(UserRole role, String... permissions) {
+        Objects.requireNonNull(role, "Role cannot be null");
         User user = new User();
+        user.setRole(role);
         user.setPermissions(permissions == null ? new String[0] : permissions.clone());
         return user;
     }
@@ -108,7 +135,7 @@ public class UserService {
      *
      * @param email email to search for (must not be null)
      * @return Optional containing the found user (defensive clone) or empty if not found
-     * @throws IllegalArgumentException if email is null
+     * @throws ValidationException if email is null
      */
     public Optional<User> findUserByEmail(String email) {
         if (email == null) throw new ValidationException("Email cannot be null");
@@ -124,7 +151,7 @@ public class UserService {
      *
      * @param user user to remove (must not be null)
      * @return true if removed, false if not found
-     * @throws IllegalArgumentException if user is null
+     * @throws ValidationException if user is null
      */
     public boolean removeUser(User user) {
         if (user == null) throw new ValidationException("User cannot be null");
@@ -145,7 +172,7 @@ public class UserService {
      *
      * @param prototypeName name of prototype (must not be null)
      * @return Optional containing a cloned prototype or empty if not found
-     * @throws IllegalArgumentException if prototypeName is null
+     * @throws ValidationException if prototypeName is null
      */
     public Optional<User> getPrototype(String prototypeName) {
         return registry.getClonedPrototype(prototypeName);
