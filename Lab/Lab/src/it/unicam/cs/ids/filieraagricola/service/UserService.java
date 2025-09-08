@@ -1,8 +1,8 @@
 package it.unicam.cs.ids.filieraagricola.service;
 
 import it.unicam.cs.ids.filieraagricola.model.User;
-import it.unicam.cs.ids.filieraagricola.model.Prototype;
-
+import it.unicam.cs.ids.filieraagricola.service.exception.ValidationException;
+import it.unicam.cs.ids.filieraagricola.system.UserPrototypeRegistry;
 import java.util.*;
 
 /**
@@ -17,14 +17,24 @@ import java.util.*;
 public class UserService {
 
     private final List<User> userList;
-    private final Map<String, User> prototypes;
+    private final UserPrototypeRegistry registry;
 
     /**
      * Constructs a new UserService with empty user storage and prototype registry.
      */
     public UserService() {
+        this(new UserPrototypeRegistry());
+    }
+
+    /**
+     * Constructs a new UserService with given prototype registry.
+     *
+     * @param registry user prototype registry (must not be null)
+     * @throws NullPointerException if registry is null
+     */
+    public UserService(UserPrototypeRegistry registry) {
         this.userList = new LinkedList<>();
-        this.prototypes = new HashMap<>();
+        this.registry = Objects.requireNonNull(registry, "UserPrototypeRegistry cannot be null");
     }
 
     /**
@@ -36,10 +46,7 @@ public class UserService {
      * @throws IllegalArgumentException if inputs invalid
      */
     public void registerPrototype(String prototypeName, User prototype) {
-        if (prototypeName == null || prototypeName.trim().isEmpty())
-            throw new IllegalArgumentException("Prototype name cannot be null or empty");
-        if (prototype == null) throw new IllegalArgumentException("Prototype cannot be null");
-        this.prototypes.put(prototypeName.trim(), prototype);
+        registry.registerPrototype(prototypeName, prototype);
     }
 
     /**
@@ -53,18 +60,16 @@ public class UserService {
      */
     public void createUser(String prototypeName, String username, String password, String email) {
         if (prototypeName == null || prototypeName.trim().isEmpty())
-            throw new IllegalArgumentException("Prototype name cannot be null or empty");
-        Objects.requireNonNull(username, "Username cannot be null");
-        Objects.requireNonNull(password, "Password cannot be null");
-        Objects.requireNonNull(email, "Email cannot be null");
+            throw new ValidationException("Prototype name cannot be null or empty");
+        if (username == null || username.isBlank())
+            throw new ValidationException("Username cannot be null or empty");
+        if (password == null || password.isEmpty())
+            throw new ValidationException("Password cannot be null or empty");
+        if (email == null || email.isBlank())
+            throw new ValidationException("Email cannot be null or empty");
 
-        User prototype = prototypes.get(prototypeName.trim());
-        if (prototype == null) {
-            throw new IllegalArgumentException("Prototype not found: " + prototypeName);
-        }
-
-        // Clone the prototype (Prototype pattern)
-        User newUser = prototype.clone();
+        // Obtain a cloned prototype (throws NotFoundException if missing)
+        User newUser = registry.getPrototypeOrThrow(prototypeName);
 
         newUser.setName(username);
         newUser.setPassword(password);
@@ -106,7 +111,7 @@ public class UserService {
      * @throws IllegalArgumentException if email is null
      */
     public Optional<User> findUserByEmail(String email) {
-        if (email == null) throw new IllegalArgumentException("Email cannot be null");
+        if (email == null) throw new ValidationException("Email cannot be null");
         String needle = email.trim().toLowerCase();
         return userList.stream()
                 .filter(u -> u.getEmail() != null && u.getEmail().trim().toLowerCase().equals(needle))
@@ -122,7 +127,7 @@ public class UserService {
      * @throws IllegalArgumentException if user is null
      */
     public boolean removeUser(User user) {
-        if (user == null) throw new IllegalArgumentException("User cannot be null");
+        if (user == null) throw new ValidationException("User cannot be null");
         return userList.remove(user);
     }
 
@@ -132,7 +137,7 @@ public class UserService {
      * @return set of registered prototype names
      */
     public Set<String> listPrototypeNames() {
-        return Collections.unmodifiableSet(prototypes.keySet());
+        return registry.listPrototypeNames();
     }
 
     /**
@@ -143,9 +148,6 @@ public class UserService {
      * @throws IllegalArgumentException if prototypeName is null
      */
     public Optional<User> getPrototype(String prototypeName) {
-        if (prototypeName == null) throw new IllegalArgumentException("Prototype name cannot be null");
-        User proto = prototypes.get(prototypeName.trim());
-        if (proto == null) return Optional.empty();
-        return Optional.of(proto.clone());
+        return registry.getClonedPrototype(prototypeName);
     }
 }
