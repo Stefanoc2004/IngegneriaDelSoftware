@@ -1,6 +1,6 @@
 package it.unicam.cs.ids.filieraagricola.system;
 
-import it.unicam.cs.ids.filieraagricola.model.User;
+import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.service.UserService;
 
 public class SystemManagerConfigurator {
@@ -16,7 +16,15 @@ public class SystemManagerConfigurator {
         system.addMap("distributor_create_package", new AuthorizeAction(new DistributorCreatePackageAction(), "distributor_rights"));
         system.addMap("admin_approve_registration", new AuthorizeAction(new ApproveRegistrationAction(), "admin_manage_registrations"));
         system.addMap("create_certificate", new AuthorizeAction(new CreateProductAction(), "certifications"));
-        system.getUserService().registerPrototype("Producer", UserService.makePrototype("certifications"));
-        system.getUserService().registerPrototype("Approver", UserService.makePrototype("approve rights"));
+
+        // register prototypes (use the UserRole enum as first parameter)
+        // NOTE: adjust permission strings to match your domain vocabulary
+        UserService userService = system.getUserService();
+        if (userService == null) {
+            throw new IllegalStateException("UserService is not initialized in SystemManager. Initialize SystemManager with services before calling SystemManagerConfigurator.configure()");
+        }
+
+        userService.registerPrototype("Producer", UserService.makePrototype(UserRole.PRODUCER, "certifications"));
+        userService.registerPrototype("Approver", UserService.makePrototype(UserRole.CURATOR, "approve rights"));
     }
 }

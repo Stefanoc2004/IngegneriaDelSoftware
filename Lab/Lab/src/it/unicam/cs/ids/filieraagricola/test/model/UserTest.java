@@ -1,6 +1,7 @@
 package it.unicam.cs.ids.filieraagricola.test.model;
 
 import it.unicam.cs.ids.filieraagricola.model.User;
+import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -26,7 +27,7 @@ class UserTest {
 
     @BeforeEach
     void setUp() {
-        testUser = new User(VALID_ID, VALID_NAME, VALID_PASSWORD, VALID_EMAIL);
+        testUser = new User(VALID_ID, VALID_NAME, VALID_PASSWORD, VALID_EMAIL, UserRole.GENERIC_USER);
     }
 
     @Nested
@@ -49,7 +50,7 @@ class UserTest {
         @Test
         @DisplayName("Full constructor should initialize all fields correctly")
         void testFullConstructor() {
-            User user = new User(VALID_ID, VALID_NAME, VALID_PASSWORD, VALID_EMAIL);
+            User user = new User(VALID_ID, VALID_NAME, VALID_PASSWORD, VALID_EMAIL, UserRole.GENERIC_USER);
 
             assertEquals(VALID_ID, user.getId());
             assertEquals(VALID_NAME, user.getName());
@@ -65,7 +66,7 @@ class UserTest {
             String nameWithSpaces = "  " + VALID_NAME + "  ";
             String emailWithSpaces = "  " + VALID_EMAIL + "  ";
 
-            User user = new User(VALID_ID, nameWithSpaces, VALID_PASSWORD, emailWithSpaces);
+            User user = new User(VALID_ID, nameWithSpaces, VALID_PASSWORD, emailWithSpaces, UserRole.GENERIC_USER);
 
             assertEquals(VALID_NAME, user.getName());
             assertEquals(VALID_EMAIL, user.getEmail());
@@ -105,7 +106,7 @@ class UserTest {
         void testConstructorRejectsNegativeId() {
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class,
-                    () -> new User(-1, VALID_NAME, VALID_PASSWORD, VALID_EMAIL)
+                    () -> new User(-1, VALID_NAME, VALID_PASSWORD, VALID_EMAIL, UserRole.GENERIC_USER)
             );
             assertEquals("User id cannot be negative", exception.getMessage());
         }
@@ -117,7 +118,7 @@ class UserTest {
         void testConstructorRejectsInvalidNames(String invalidName) {
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class,
-                    () -> new User(VALID_ID, invalidName, VALID_PASSWORD, VALID_EMAIL)
+                    () -> new User(VALID_ID, invalidName, VALID_PASSWORD, VALID_EMAIL, UserRole.GENERIC_USER)
             );
             assertEquals("User name cannot be null or empty", exception.getMessage());
         }
@@ -128,7 +129,7 @@ class UserTest {
         void testConstructorRejectsInvalidPasswords(String invalidPassword) {
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class,
-                    () -> new User(VALID_ID, VALID_NAME, invalidPassword, VALID_EMAIL)
+                    () -> new User(VALID_ID, VALID_NAME, invalidPassword, VALID_EMAIL, UserRole.GENERIC_USER)
             );
             assertEquals("Password cannot be null or empty", exception.getMessage());
         }
@@ -140,7 +141,7 @@ class UserTest {
         void testConstructorRejectsInvalidEmails(String invalidEmail) {
             IllegalArgumentException exception = assertThrows(
                     IllegalArgumentException.class,
-                    () -> new User(VALID_ID, VALID_NAME, VALID_PASSWORD, invalidEmail)
+                    () -> new User(VALID_ID, VALID_NAME, VALID_PASSWORD, invalidEmail, UserRole.GENERIC_USER)
             );
             assertEquals("Email cannot be null or empty", exception.getMessage());
         }
@@ -402,9 +403,9 @@ class UserTest {
         @Test
         @DisplayName("Equals should work with ID-based comparison")
         void testEqualsWithId() {
-            User user1 = new User(1, "Name1", "pass1", "email1@test.com");
-            User user2 = new User(1, "Name2", "pass2", "email2@test.com");
-            User user3 = new User(2, "Name1", "pass1", "email1@test.com");
+            User user1 = new User(1, "Name1", "pass1", "email1@test.com", UserRole.GENERIC_USER);
+            User user2 = new User(1, "Name2", "pass2", "email2@test.com", UserRole.GENERIC_USER);
+            User user3 = new User(2, "Name1", "pass1", "email1@test.com", UserRole.GENERIC_USER);
 
             assertEquals(user1, user2); // Same ID
             assertNotEquals(user1, user3); // Different ID
@@ -413,9 +414,9 @@ class UserTest {
         @Test
         @DisplayName("Equals should fall back to email when ID is zero")
         void testEqualsWithEmailFallback() {
-            User user1 = new User(0, "Name1", "pass1", "same@email.com");
-            User user2 = new User(0, "Name2", "pass2", "same@email.com");
-            User user3 = new User(0, "Name1", "pass1", "different@email.com");
+            User user1 = new User(0, "Name1", "pass1", "same@email.com", UserRole.GENERIC_USER);
+            User user2 = new User(0, "Name2", "pass2", "same@email.com", UserRole.GENERIC_USER);
+            User user3 = new User(0, "Name1", "pass1", "different@email.com", UserRole.GENERIC_USER);
 
             assertEquals(user1, user2); // Same email, both ID = 0
             assertNotEquals(user1, user3); // Different email
@@ -432,8 +433,8 @@ class UserTest {
         @Test
         @DisplayName("HashCode should be consistent with equals")
         void testHashCodeConsistency() {
-            User user1 = new User(1, "Name1", "pass1", "email1@test.com");
-            User user2 = new User(1, "Name2", "pass2", "email2@test.com");
+            User user1 = new User(1, "Name1", "pass1", "email1@test.com", UserRole.GENERIC_USER);
+            User user2 = new User(1, "Name2", "pass2", "email2@test.com", UserRole.GENERIC_USER);
 
             assertEquals(user1, user2);
             assertEquals(user1.hashCode(), user2.hashCode());
@@ -442,8 +443,8 @@ class UserTest {
         @Test
         @DisplayName("HashCode should use email when ID is zero")
         void testHashCodeWithEmailFallback() {
-            User user1 = new User(0, "Name1", "pass1", "same@email.com");
-            User user2 = new User(0, "Name2", "pass2", "same@email.com");
+            User user1 = new User(0, "Name1", "pass1", "same@email.com", UserRole.GENERIC_USER);
+            User user2 = new User(0, "Name2", "pass2", "same@email.com", UserRole.GENERIC_USER);
 
             assertEquals(user1.hashCode(), user2.hashCode());
         }

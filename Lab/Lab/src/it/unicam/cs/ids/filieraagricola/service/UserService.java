@@ -131,6 +131,27 @@ public class UserService {
     }
 
     /**
+     * Authenticate a user by email and password.
+     *
+     * @param email user email
+     * @param password raw password
+     * @return Optional with the authenticated user (defensive clone) or empty if auth fails
+     * @throws ValidationException if email or password null/blank
+     */
+    public Optional<User> authenticate(String email, String password) {
+        if (email == null || email.isBlank()) throw new ValidationException("Email cannot be null or empty");
+        if (password == null) throw new ValidationException("Password cannot be null");
+
+        String needle = email.trim().toLowerCase();
+        return userList.stream()
+                .filter(u -> u.getEmail() != null
+                        && u.getEmail().trim().toLowerCase().equals(needle)
+                        && Objects.equals(u.getPassword(), password))
+                .findFirst()
+                .map(User::clone);
+    }
+
+    /**
      * Finds a user by email address.
      *
      * @param email email to search for (must not be null)
