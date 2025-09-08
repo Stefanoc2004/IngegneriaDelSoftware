@@ -4,14 +4,16 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Represents a user of the agricultural supply-chain platform.
+ * Represents a user (actor) of the agricultural supply-chain platform.
  *
  * <p>This class implements the Prototype pattern via {@link Prototype#clone()}.
  * Instances are safe to clone and the internal permissions array is defensively
  * copied to avoid accidental mutation sharing between instances.</p>
  *
- * <p>Equality is primarily based on {@code id} when present (non-zero),
- * otherwise falls back to {@code email} if available.</p>
+ * <p>Equality is primarily based on {@code id} when present (> 0),
+ * otherwise falls back to {@code email} if available. Note that modifying the
+ * {@code id} after insertion in hash-based collections may break collection
+ * invariants; prefer immutable keys or avoid using mutable Users as map keys.</p>
  */
 public class User implements Prototype<User> {
 
@@ -20,36 +22,41 @@ public class User implements Prototype<User> {
     private String password;
     private String email;
     private String[] permissions;
+    private UserRole role;
 
     /**
      * Default no-arg constructor for frameworks and for prototype creation.
-     * All fields are initialized to default values (id = 0, others null).
+     * All fields are initialized to default values (id = 0, others null or empty array).
      */
     public User() {
         this.id = 0;
         this.permissions = new String[0];
+        this.role = UserRole.GENERIC_USER;
     }
 
     /**
-     * Full constructor that validates and sets all fields.
+     * Full constructor that validates and sets fields.
      *
-     * @param id         numeric identifier for the user (0 allowed for not-persisted)
-     * @param name       user's display name (must not be null or empty)
-     * @param password   user's password (must not be null or empty)
-     * @param email      user's email address (must not be null or empty)
-     * @throws IllegalArgumentException if name/password/email are null or empty or id is negative
+     * @param id       numeric identifier for the user (0 allowed for not-persisted)
+     * @param name     user's display name (must not be null or empty)
+     * @param password user's password (must not be null or empty)
+     * @param email    user's email address (must not be null or empty)
+     * @param role     role/actor type (must not be null)
+     * @throws IllegalArgumentException if name/password/email are null/empty or id is negative or role is null
      */
-    public User(int id, String name, String password, String email) {
+    public User(int id, String name, String password, String email, UserRole role) {
         validateId(id);
         validateName(name);
         validatePassword(password);
         validateEmail(email);
+        Objects.requireNonNull(role, "User role cannot be null");
 
         this.id = id;
         this.name = name.trim();
         this.password = password;
         this.email = email.trim();
         this.permissions = new String[0];
+        this.role = role;
     }
 
     /**
@@ -65,6 +72,7 @@ public class User implements Prototype<User> {
         this.password = other.password;
         this.email = other.email;
         this.permissions = other.permissions == null ? new String[0] : Arrays.copyOf(other.permissions, other.permissions.length);
+        this.role = other.role;
     }
 
     /**
@@ -76,6 +84,8 @@ public class User implements Prototype<User> {
     public User clone() {
         return new User(this);
     }
+
+    // ---------- Getters / Setters ----------
 
     /**
      * Returns the numeric id of the user.
@@ -122,7 +132,7 @@ public class User implements Prototype<User> {
      *
      * <p>Note: this returns the stored password value. In production code you
      * should never store plaintext passwords; use hashed passwords and avoid
-     * exposing them. This class follows the project's current simplified model.</p>
+     * exposing them. This class follows the project's simplified model.</p>
      *
      * @return password string
      */
@@ -226,47 +236,44 @@ public class User implements Prototype<User> {
     }
 
     /**
-     * Validates the numeric id parameter.
+     * Returns the role (actor type) of this user.
      *
-     * @param id candidate id
-     * @throws IllegalArgumentException if id is negative
+     * @return user role (never null)
      */
+    public UserRole getRole() {
+        return role;
+    }
+
+    /**
+     * Sets the role (actor type) of this user.
+     *
+     * @param role not null
+     * @throws NullPointerException if role is null
+     */
+    public void setRole(UserRole role) {
+        this.role = Objects.requireNonNull(role, "Role cannot be null");
+    }
+
+    // ---------- Validation helpers ----------
+
     private static void validateId(int id) {
         if (id < 0) {
             throw new IllegalArgumentException("User id cannot be negative");
         }
     }
 
-    /**
-     * Validates the name parameter.
-     *
-     * @param name candidate name
-     * @throws IllegalArgumentException if name is null or empty
-     */
     private static void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("User name cannot be null or empty");
         }
     }
 
-    /**
-     * Validates the password parameter.
-     *
-     * @param password candidate password
-     * @throws IllegalArgumentException if password is null or empty
-     */
     private static void validatePassword(String password) {
         if (password == null || password.isEmpty()) {
             throw new IllegalArgumentException("Password cannot be null or empty");
         }
     }
 
-    /**
-     * Validates the email parameter.
-     *
-     * @param email candidate email
-     * @throws IllegalArgumentException if email is null or empty
-     */
     private static void validateEmail(String email) {
         if (email == null || email.trim().isEmpty()) {
             throw new IllegalArgumentException("Email cannot be null or empty");
@@ -313,6 +320,7 @@ public class User implements Prototype<User> {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", email='" + email + '\'' +
+                ", role=" + role +
                 ", permissions=" + Arrays.toString(permissions) +
                 '}';
     }
