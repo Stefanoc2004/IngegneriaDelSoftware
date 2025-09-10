@@ -94,17 +94,6 @@ public class Content  {
     }
 
     /**
-     * Creates a deep copy of this Content instance.
-     * This method is part of the Prototype pattern implementation.
-     *
-     * @return a new Content instance with the same properties as this one
-     */
-    @Override
-    public Content clone() {
-        return new Content(this);
-    }
-
-    /**
      * Checks if content is approved for publication.
      *
      * @return true if the content state is APPROVED, false otherwise

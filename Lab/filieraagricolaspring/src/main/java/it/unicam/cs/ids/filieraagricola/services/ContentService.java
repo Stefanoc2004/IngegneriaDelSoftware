@@ -3,11 +3,13 @@ package it.unicam.cs.ids.filieraagricola.services;
 import it.unicam.cs.ids.filieraagricola.model.Content;
 import it.unicam.cs.ids.filieraagricola.model.ContentState;
 import it.unicam.cs.ids.filieraagricola.model.ContentType;
+import it.unicam.cs.ids.filieraagricola.model.Event;
 import it.unicam.cs.ids.filieraagricola.model.repositories.ContentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class ContentService {
@@ -43,17 +45,14 @@ public class ContentService {
     /**
      * Removes a certification from this producer's certifications.
      *
-     * @param certification certification to remove
      * @return true if the certification was removed, false if it wasn't found
      */
-    public boolean removeCertification(Content certification) {
-        if (certification == null) {
+    public boolean removeContent(String id) {
+        Content content = getContent(id);
+        if (content == null) {
             return false;
         }
-        if (certifications.findById(certification.getId()).isEmpty()) {
-            return false;
-        }
-        certifications.delete(certification);
+        certifications.delete(content);
         return true;
     }
 
@@ -75,6 +74,15 @@ public class ContentService {
     public boolean hasCertification(Content certification) {
         if (certification == null) return false;
         return certifications.findById(certification.getId()).isPresent();
+    }
+
+
+    public Content getContent(String id) {
+        Optional<Content> opt = certifications.findById(id);
+        if (opt.isPresent()) {
+            return opt.get();
+        }
+        return null;
     }
 
 }
