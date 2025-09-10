@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentMap;
  * <p>Keys are normalized using {@code trim() + toLowerCase()} to avoid accidental
  * case-related mismatches. Registered prototypes are stored and cloned on retrieval.</p>
  */
-@Service
+
 public class UserPrototypeRegistry {
 
     private final ConcurrentMap<String, User> registry;

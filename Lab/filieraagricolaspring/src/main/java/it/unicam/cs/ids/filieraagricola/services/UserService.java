@@ -4,19 +4,33 @@ import it.unicam.cs.ids.filieraagricola.model.User;
 import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.model.repositories.UserRepository;
 import it.unicam.cs.ids.filieraagricola.services.exception.ValidationException;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class UserService {
-
+    public static final String USER_KEY = "user";
+    @Autowired
+    private HttpSession httpSession;
     @Autowired
     private UserRepository repository;
     @Autowired
     private UserPrototypeRegistry registry;
+
+    /**
+     * Convenience factory to create a reusable prototype with pre-filled permissions and role.
+     *
+     * @param permissions permission strings to assign to the prototype
+     * @return new User prototype instance with specified permissions (id = 0, name/email empty)
+     */
+    public static User makePrototype(UserRole... permissions) {
+        User user = new User();
+        user.setPermissions(permissions);
+        return user;
+    }
 
     /**
      * Creates a new user by cloning the named prototype and customizing its fields.
@@ -62,22 +76,6 @@ public class UserService {
     }
 
     /**
-     * Convenience factory to create a reusable prototype with pre-filled permissions and role.
-     *
-     * @param role        role to assign to the prototype (not null)
-     * @param permissions permission strings to assign to the prototype
-     * @return new User prototype instance with specified permissions (id = 0, name/email empty)
-     */
-    public static User makePrototype(UserRole role, String... permissions) {
-        Objects.requireNonNull(role, "Role cannot be null");
-        User user = new User();
-        user.setRole(role);
-        user.setPermissions(permissions == null ? new String[0] : permissions.clone());
-        return user;
-    }
-
-
-    /**
      * Registers a prototype under the provided name. The prototype is stored as-is;
      * it will be cloned when used to create new users.
      *
@@ -92,19 +90,39 @@ public class UserService {
     /**
      * Authenticate a user by email and password.
      *
-     * @param email user email
+     * @param email    user email
      * @param password raw password
      * @return Optional with the authenticated user (defensive clone) or empty if auth fails
      * @throws ValidationException if email or password null/blank
      */
-    public Optional<User> authenticate(String email, String password) {
+
+    public Boolean authenticate(String email, String password) {
         if (email == null || email.isBlank()) throw new ValidationException("Email cannot be null or empty");
         if (password == null) throw new ValidationException("Password cannot be null");
 
         String needle = email.trim().toLowerCase();
-        return repository.findByEmailAndPassword(needle,password);
-    }
-    
+        Optional<User> opt = repository.findByEmailAndPassword(needle, password);
+        if (opt.isEmpty()) {
+            return false;
+        }
+        User user = opt.get();
+        httpSession.setAttribute(USER_KEY, user);
+        return true;
 
+    }
+
+    public Boolean hasRole(UserRole role) {
+        User user = (User) httpSession.getAttribute(USER_KEY);
+        if (user == null) {
+            return false;
+        }
+        UserRole[] userRoles = user.getPermissions();
+        for (UserRole roles : userRoles) {
+            if (roles.equals(role)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
