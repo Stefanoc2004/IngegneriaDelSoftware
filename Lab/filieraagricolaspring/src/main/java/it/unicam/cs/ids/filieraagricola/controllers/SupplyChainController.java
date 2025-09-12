@@ -3,8 +3,12 @@ package it.unicam.cs.ids.filieraagricola.controllers;
 import it.unicam.cs.ids.filieraagricola.controllers.dto.CreateSupplyChainDto;
 import it.unicam.cs.ids.filieraagricola.model.Product;
 import it.unicam.cs.ids.filieraagricola.model.SupplyChain;
+import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.services.SupplyChainService;
+import it.unicam.cs.ids.filieraagricola.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.LinkedList;
@@ -15,19 +19,28 @@ import java.util.List;
 public class SupplyChainController {
 
     @Autowired
+    UserService userService;
+    @Autowired
     private SupplyChainService service;
 
 
     @PostMapping("/{supplyChainId}/products")
-    public Product acquireProduct(@RequestBody Product product, @PathVariable String supplyChainId) {
-        return service.acquireProduct(product, supplyChainId);
+    public ResponseEntity<Product> acquireProduct(@RequestBody Product product, @PathVariable String supplyChainId) {
+        if (!userService.hasRole(UserRole.PRODUCER)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+        Product p = service.acquireProduct(product, supplyChainId);
+        return ResponseEntity.ok(p);
 
     }
 
     @DeleteMapping("/{supplyChainId}/products/{productsId}")
-    public boolean deleteProduct(@PathVariable String supplyChainId,@PathVariable String productsId) {
-        //TODO
-        return service.deleteProduct(null);
+    public ResponseEntity<Boolean> deleteProduct(@PathVariable String supplyChainId,@PathVariable String productsId) {
+        if (!userService.hasRole(UserRole.PRODUCER)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
+        }
+        Boolean b = service.deleteProduct(supplyChainId, productsId);
+        return ResponseEntity.ok(b);
     }
 
     @GetMapping("/{supplyChainId}/products")

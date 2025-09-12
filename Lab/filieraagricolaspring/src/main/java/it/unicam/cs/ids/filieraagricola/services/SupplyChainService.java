@@ -55,13 +55,25 @@ public class SupplyChainService {
     /**
      * Sells (removes) a product from the managed collection.
      *
-     * @param product product to sell (must match by equality/id)
      * @return {@code true} if the product was removed; {@code false} otherwise
      * @throws IllegalArgumentException if {@code product} is null or not available
      */
-    public boolean deleteProduct(Product product) {
-        if (productList.findById(product.getId()).isPresent()) {
-            productList.delete(product);
+    public boolean deleteProduct(String supplyChainId, String id ) {
+        // Verifichiamo se esite dentro al repository un prodotto con l'Id fornito
+        Optional<Product> optionalProduct = productList.findById(id);
+        if (optionalProduct.isPresent()) {
+            // Verifichiamo se esite dentro al repository una supplychain con l'Id fornito
+            Optional<SupplyChain> opt = supplyChainList.findById(supplyChainId);
+            if (opt.isPresent()) {
+                // Siamo sicuri che abbiamo il product e la supplychain di quel product
+                SupplyChain supplyChain = opt.get();
+                // Rimuoviamo il prodotto dalla supplychain
+                supplyChain.getProducts().remove(optionalProduct.get());
+                // Salviamo la supplychain
+                supplyChainList.save(supplyChain);
+            }
+            //Effettiva delete del prodotto
+            productList.delete(optionalProduct.get());
             return true;
         }
         return false;

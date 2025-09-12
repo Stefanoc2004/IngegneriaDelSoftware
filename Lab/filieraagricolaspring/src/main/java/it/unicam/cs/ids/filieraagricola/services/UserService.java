@@ -6,8 +6,10 @@ import it.unicam.cs.ids.filieraagricola.model.repositories.UserRepository;
 import it.unicam.cs.ids.filieraagricola.services.exception.ValidationException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -123,6 +125,10 @@ public class UserService {
             }
         }
         return false;
+    }
+
+    public List<User> getUsers() {
+        return repository.findAll();
     }
 
 }

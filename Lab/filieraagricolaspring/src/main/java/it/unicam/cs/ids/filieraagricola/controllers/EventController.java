@@ -5,6 +5,8 @@ import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.services.EventService;
 import it.unicam.cs.ids.filieraagricola.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -19,13 +21,14 @@ public class EventController {
     private EventService service;
 
     @PostMapping
-    public Event organizeEvent(@RequestBody Event event) {
+    public ResponseEntity<Event> organizeEvent(@RequestBody Event event) {
         //Animator
         if (!userService.hasRole(UserRole.ANIMATOR)) {
             // restituire codice http
-            return null;
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
-        return service.organizeEvent(event);
+        Event e = service.organizeEvent(event);
+        return ResponseEntity.ok(e);
     }
 
     @GetMapping
@@ -39,8 +42,13 @@ public class EventController {
     }
 
     @DeleteMapping("/{id}")
-    public boolean delete(@PathVariable String id) {
-        return service.delete(id);
+    public ResponseEntity<Boolean> delete(@PathVariable String id) {
+        //Animator
+        if (!userService.hasRole(UserRole.ANIMATOR)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
+        }
+        Boolean b = service.delete(id);
+        return ResponseEntity.ok(b);
     }
 
 

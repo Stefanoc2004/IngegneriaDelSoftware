@@ -21,6 +21,7 @@ import java.util.UUID;
 @Entity
 public class Product  {
 
+    //TODO aggiungere il prezzo dei prodotti
     @Id
     private String id;
     private String name;
