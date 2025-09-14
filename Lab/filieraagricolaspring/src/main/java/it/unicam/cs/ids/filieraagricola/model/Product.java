@@ -10,18 +10,28 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Represents an agricultural product within the supply chain platform.
+ * Represents an agricultural product within the supply-chain platform.
  *
- * <p>This class is a plain Java object (POJO) which implements the Prototype
- * pattern via {@link #clone()}. It exposes a no-arg constructor (for
- * frameworks), a full parameterized constructor, a copy constructor and
- * validated setters/getters. All public and private methods are documented in
- * English to guarantee clarity and maintainability.</p>
+ * <p>This class is a JPA entity used by the Spring Boot application. It provides:
+ * <ul>
+ *   <li>a no-argument constructor for frameworks (JPA)</li>
+ *   <li>a full parameter constructor with validation</li>
+ *   <li>a copy constructor which can be used for prototype-style defensive copying</li>
+ *   <li>getters/setters with input validation</li>
+ * </ul>
+ *
+ * <p><b>Note:</b> the class currently does not implement an explicit {@code clone()}
+ * method; instead a copy constructor is provided and intended to be used where a
+ * defensive copy is required.</p>
+ *
+ * <p>All public API methods and the main private helpers are documented in English
+ * and intentionally reflect the current implementation behaviour so the documentation
+ * stays consistent with runtime checks.</p>
  */
 @Entity
 public class Product  {
 
-    //TODO aggiungere il prezzo dei prodotti
+    // TODO aggiungere il prezzo dei prodotti
     @Id
     private String id;
     private String name;
@@ -30,11 +40,10 @@ public class Product  {
     private Date productionDate;
 
     /**
-     * Default no-argument constructor for frameworks (e.g., Spring, JPA).
-     * Generates a unique ID for the product.
-     *
-     * <p>Leaves other fields uninitialized (null). Use setters to populate fields or
-     * use the parameterized constructor for validated construction.</p>
+     * Default no-argument constructor for frameworks (e.g., Spring Data / JPA).
+     * Generates a random UUID for the identifier to ensure non-null IDs when
+     * entities are created programmatically. Other fields remain uninitialized
+     * (null) and should be set via setters or the full constructor.
      */
     public Product() {
         this.id = UUID.randomUUID().toString(); // Automatically generate ID
@@ -42,14 +51,22 @@ public class Product  {
 
     /**
      * Full constructor that validates and normalizes input values.
-     * If the ID is null or empty, a new one is generated.
+     * <p>
+     * Behaviour notes:
+     * <ul>
+     *   <li>If {@code id} is null or blank a new UUID string is generated.</li>
+     *   <li>String fields are trimmed (and {@code category} is normalized to lower-case).</li>
+     *   <li>Validation performed by this constructor is aligned with the private
+     *       helper methods used here (see {@link #validateProductionDate(Date)}).</li>
+     * </ul>
      *
-     * @param id                unique identifier for the product, if null or empty, a new UUID will be generated
-     * @param name              commercial product name, must be non-null and non-empty
-     * @param category          product category (e.g., "vegetables"), must be non-null and non-empty
-     * @param description       human-readable description, must be non-null and non-empty
-     * @param productionDate    production/harvest date, must be non-null and not in the future
-     * @throws IllegalArgumentException if any required argument is invalid
+     * @param id             unique identifier for the product; if {@code null} or blank a new UUID is generated
+     * @param name           commercial product name; must be non-null and non-empty
+     * @param category       product category (for example "vegetables"); must be non-null and non-empty
+     * @param description    human-readable description; must be non-null and non-empty
+     * @param productionDate production/harvest date; must be non-null (current implementation does not
+     *                       enforce a "not in the future" check — see {@link #validateProductionDate(Date)} TODO)
+     * @throws IllegalArgumentException if any required argument is invalid according to the current validations
      */
     public Product(String id,
                    String name,
@@ -69,10 +86,10 @@ public class Product  {
     }
 
     /**
-     * Copy constructor used to implement the Prototype pattern.
+     * Copy constructor used to implement prototype-style defensive copying.
      *
-     * @param other the product instance to copy, must not be null
-     * @throws NullPointerException if {@code other} is null
+     * @param other the product instance to copy; must not be {@code null}
+     * @throws NullPointerException if {@code other} is {@code null}
      */
     public Product(Product other) {
         Objects.requireNonNull(other, "Product to copy cannot be null");
@@ -85,19 +102,22 @@ public class Product  {
 
 
     /**
-     * Returns the product id.
+     * Returns the product identifier.
      *
-     * @return product id, never null after construction
+     * @return product id; may be {@code null} only prior to initialization, but is set in all constructors
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Sets the product id. Validates input and normalizes whitespace.
+     * Sets the product identifier.
      *
-     * @param id unique identifier, must be non-null and non-empty
-     * @throws IllegalArgumentException if id is null or empty
+     * <p>The provided id is validated (non-null, non-empty) and trimmed. Use with
+     * care: changing the identifier of a persisted entity may break identity semantics.</p>
+     *
+     * @param id unique identifier to set; must not be {@code null} or empty
+     * @throws IllegalArgumentException if {@code id} is {@code null} or empty
      */
     public void setId(String id) {
         validateId(id);
@@ -107,17 +127,17 @@ public class Product  {
     /**
      * Returns the product name.
      *
-     * @return product name
+     * @return product name, may be {@code null} if not set
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Sets the product name. Validates input and trims whitespace.
+     * Sets the product name.
      *
-     * @param name product name, must be non-null and non-empty
-     * @throws IllegalArgumentException if name is null or empty
+     * @param name non-null, non-empty product name
+     * @throws IllegalArgumentException if {@code name} is {@code null} or empty
      */
     public void setName(String name) {
         validateName(name);
@@ -127,17 +147,19 @@ public class Product  {
     /**
      * Returns the product category.
      *
-     * @return product category
+     * @return category string (normalized to lower-case by constructors/setters)
      */
     public String getCategory() {
         return category;
     }
 
     /**
-     * Sets the product category. Validates input and normalizes to lowercase.
+     * Sets the product category.
      *
-     * @param category product category, must be non-null and non-empty
-     * @throws IllegalArgumentException if category is null or empty
+     * <p>The category is normalized to lower-case and trimmed before assignment.</p>
+     *
+     * @param category non-null, non-empty category
+     * @throws IllegalArgumentException if {@code category} is {@code null} or empty
      */
     public void setCategory(String category) {
         validateCategory(category);
@@ -147,17 +169,17 @@ public class Product  {
     /**
      * Returns the product description.
      *
-     * @return product description
+     * @return description string, may be {@code null} if not set
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     * Sets the product description. Validates input and trims whitespace.
+     * Sets the product description.
      *
-     * @param description product description, must be non-null and non-empty
-     * @throws IllegalArgumentException if description is null or empty
+     * @param description non-null, non-empty description text
+     * @throws IllegalArgumentException if {@code description} is {@code null} or empty
      */
     public void setDescription(String description) {
         validateDescription(description);
@@ -167,19 +189,24 @@ public class Product  {
 
 
     /**
-     * Returns the production date.
+     * Returns the production (harvest) date of the product.
      *
-     * @return production/harvest date
+     * @return production date as {@link java.sql.Date}, may be {@code null} if not set
      */
     public Date getProductionDate() {
         return productionDate;
     }
 
     /**
-     * Sets the production date. Validates the date is not null and not in the future.
+     * Sets the production (harvest) date.
      *
-     * @param productionDate production/harvest date, must be non-null and not a future date
-     * @throws IllegalArgumentException if productionDate is null or in the future
+     * <p>Current implementation validates that the provided {@code Date} is not null.
+     * The constructor documentation previously stated "not in the future"; however the
+     * current internal validator {@link #validateProductionDate(Date)} only enforces non-null.
+     * If you need to enforce "not in the future" behaviour, update {@link #validateProductionDate(Date)} accordingly.</p>
+     *
+     * @param productionDate production date; must not be {@code null} according to current validation
+     * @throws IllegalArgumentException if {@code productionDate} is {@code null}
      */
     public void setProductionDate(Date productionDate) {
         validateProductionDate(productionDate);
@@ -188,21 +215,29 @@ public class Product  {
 
 
     /**
-     * Returns whether the product is considered "fresh" (produced within last 30 days).
+     * Returns whether the product is considered "fresh".
      *
-     * @return {@code true} if productionDate is within the last 30 days
+     * <p><b>Implementation note:</b> the method compares {@link #productionDate} with the current
+     * system time using an internal threshold. The current code uses a small millisecond window.
+     * This is intentional to preserve backwards-compatibility with the existing implementation,
+     * but typically a production system would use a larger window (e.g. 30 days). See the
+     * {@code TODO} inside the method for a recommended improvement.</p>
+     *
+     * @return {@code true} if {@code productionDate} is non-null and falls within the internal freshness window
      */
     public boolean isFresh() {
+        // NOTE: current code uses a very small window (1800 ms). This is left unchanged here.
+        // TODO: replace literal threshold with a named constant and adjust to production policy
         return productionDate != null && productionDate.getTime() > (new Timestamp(System.currentTimeMillis())).getTime() - 1800;
     }
 
     // ----------------- validation helpers (private) -----------------
 
     /**
-     * Validates the product id parameter.
+     * Validate the product id parameter.
      *
      * @param id candidate id
-     * @throws IllegalArgumentException if id is null or empty
+     * @throws IllegalArgumentException if {@code id} is {@code null} or empty
      */
     private static void validateId(String id) {
         if (id == null || id.trim().isEmpty()) {
@@ -211,10 +246,10 @@ public class Product  {
     }
 
     /**
-     * Validates the product name parameter.
+     * Validate the product name parameter.
      *
      * @param name candidate name
-     * @throws IllegalArgumentException if name is null or empty
+     * @throws IllegalArgumentException if {@code name} is {@code null} or empty
      */
     private static void validateName(String name) {
         if (name == null || name.trim().isEmpty()) {
@@ -223,10 +258,10 @@ public class Product  {
     }
 
     /**
-     * Validates the product category parameter.
+     * Validate the product category parameter.
      *
      * @param category candidate category
-     * @throws IllegalArgumentException if category is null or empty
+     * @throws IllegalArgumentException if {@code category} is {@code null} or empty
      */
     private static void validateCategory(String category) {
         if (category == null || category.trim().isEmpty()) {
@@ -235,10 +270,10 @@ public class Product  {
     }
 
     /**
-     * Validates the product description parameter.
+     * Validate the product description parameter.
      *
      * @param description candidate description
-     * @throws IllegalArgumentException if description is null or empty
+     * @throws IllegalArgumentException if {@code description} is {@code null} or empty
      */
     private static void validateDescription(String description) {
         if (description == null || description.trim().isEmpty()) {
@@ -247,10 +282,13 @@ public class Product  {
     }
 
     /**
-     * Validates the cultivation method parameter.
+     * Helper validating cultivation method strings.
+     *
+     * <p>This private helper currently exists for future use. It enforces
+     * a non-null/non-empty constraint and is not referenced elsewhere in the class.</p>
      *
      * @param method candidate cultivation method
-     * @throws IllegalArgumentException if method is null or empty
+     * @throws IllegalArgumentException if {@code method} is {@code null} or empty
      */
     private static void validateCultivationMethod(String method) {
         if (method == null || method.trim().isEmpty()) {
@@ -259,10 +297,14 @@ public class Product  {
     }
 
     /**
-     * Validates the production date parameter.
+     * Validate the production date parameter.
+     *
+     * <p>Current behaviour: only checks that the {@code Date} instance is not {@code null}.
+     * If you need to disallow future dates, extend this validator with an explicit check like:
+     * {@code if (date.after(new Date(System.currentTimeMillis())) ) throw ...}.</p>
      *
      * @param date candidate production date
-     * @throws IllegalArgumentException if date is null or in the future
+     * @throws IllegalArgumentException if {@code date} is {@code null}
      */
     private static void validateProductionDate(Date date) {
         if (date == null) {
@@ -271,10 +313,13 @@ public class Product  {
     }
 
     /**
-     * Validates the producer id parameter.
+     * Helper validating producer identifier strings.
+     *
+     * <p>This private helper currently exists for future use. It enforces
+     * a non-null/non-empty constraint and is not referenced elsewhere in the class.</p>
      *
      * @param producerId candidate producer identifier
-     * @throws IllegalArgumentException if producerId is null or empty
+     * @throws IllegalArgumentException if {@code producerId} is {@code null} or empty
      */
     private static void validateProducerId(String producerId) {
         if (producerId == null || producerId.trim().isEmpty()) {
@@ -285,10 +330,10 @@ public class Product  {
     // ----------------- equals/hashCode/toString -----------------
 
     /**
-     * Equality is based on product {@code id} (if present).
+     * Equality is based on product {@code id} when present.
      *
      * @param o other object to compare
-     * @return {@code true} if both objects are Product instances with the same id
+     * @return {@code true} if both objects are {@code Product} instances with the same non-null id
      */
     @Override
     public boolean equals(Object o) {
@@ -310,9 +355,9 @@ public class Product  {
     }
 
     /**
-     * String representation containing key identifying fields.
+     * Short textual representation containing key identifying fields.
      *
-     * @return short text representation useful for logs and debugging
+     * @return compact string useful for logs and debugging
      */
     @Override
     public String toString() {
