@@ -73,9 +73,11 @@ public class PackageService {
             throw new ValidationException("Product cannot be null");
         }
 
-        ProductPackage pkg = findPackageById(packageId);
+        // get actual instance to modify
+        ProductPackage pkg = findPackageByIdInternal(packageId);
         pkg.getProducts().add(new Product(product));
 
+        // return defensive copy
         return new ProductPackage(pkg);
     }
 
@@ -89,14 +91,13 @@ public class PackageService {
      */
     public ProductPackage removeProductFromPackage(String packageId,
                                                    String productId) {
-        ProductPackage pkg = findPackageById(packageId);
+        // modify actual instance
+        ProductPackage pkg = findPackageByIdInternal(packageId);
 
-        boolean removed = pkg.getProducts()
-                .removeIf(p -> p.getId().equals(productId));
+        boolean removed = pkg.getProducts().removeIf(p -> p.getId().equals(productId));
 
         if (!removed) {
-            throw new NotFoundException(
-                    "Product not found in package: " + productId);
+            throw new NotFoundException("Product not found in package: " + productId);
         }
 
         return new ProductPackage(pkg);
@@ -118,7 +119,8 @@ public class PackageService {
                                                 List<Product> newProducts) {
         validateProductList(newProducts);
 
-        ProductPackage pkg = findPackageById(packageId);
+        // modify actual instance
+        ProductPackage pkg = findPackageByIdInternal(packageId);
         pkg.setProducts(createProductsCopy(newProducts));
 
         return new ProductPackage(pkg);
@@ -137,7 +139,8 @@ public class PackageService {
                                             String newName) {
         validatePackageName(newName);
 
-        ProductPackage pkg = findPackageById(packageId);
+        // modify actual instance
+        ProductPackage pkg = findPackageByIdInternal(packageId);
         pkg.setName(normalizeString(newName));
 
         return new ProductPackage(pkg);
