@@ -1,155 +1,139 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 /**
  * Represents a package (bundle) of products in the agricultural supply chain.
  *
- * <p>Implements {@link Prototype} and supports defensive copying of contained products.</p>
+ * <p>This class is a pure domain model following the Single Responsibility
+ * Principle. It focuses solely on representing a collection of products
+ * without business logic. All operations like package validation, product
+ * management, and business rules are delegated to PackageService.</p>
  */
-public class ProductPackage implements Prototype<ProductPackage> {
+public class ProductPackage {
 
+    private String id;
     private String name;
     private List<Product> products;
 
     /**
-     * Default constructor for frameworks and for manual construction.
-     * Creates an empty product list.
+     * Default constructor for frameworks.
+     * Creates an empty product list and generates a unique ID.
      */
     public ProductPackage() {
+        this.id = UUID.randomUUID().toString();
         this.products = new ArrayList<>();
     }
 
     /**
-     * Main constructor that validates inputs and stores defensive copies
-     * of collection arguments.
+     * Main constructor that creates a package with name and products.
      *
-     * @param name     package name, must be non-null and non-empty
-     * @param products list of products contained in the package, must be non-null
-     * @throws IllegalArgumentException if name is null/empty or products is null
+     * @param name     package name
+     * @param products list of products in the package
      */
     public ProductPackage(String name, List<Product> products) {
-        setName(name);
-        setProducts(products);
+        this.id = UUID.randomUUID().toString();
+        this.name = name;
+        this.products = products != null ? new ArrayList<>(products) : new ArrayList<>();
     }
 
     /**
-     * Copy constructor used to implement the Prototype pattern.
+     * Full constructor with all fields including ID.
      *
-     * @param other the ProductPackage instance to copy, must not be null
-     * @throws NullPointerException if {@code other} is null
+     * @param id       package identifier
+     * @param name     package name
+     * @param products list of products in the package
+     */
+    public ProductPackage(String id, String name, List<Product> products) {
+        this.id = (id == null || id.trim().isEmpty())
+                ? UUID.randomUUID().toString()
+                : id.trim();
+        this.name = name;
+        this.products = products != null ? new ArrayList<>(products) : new ArrayList<>();
+    }
+
+    /**
+     * Copy constructor for creating a new instance from an existing package.
+     *
+     * @param other the ProductPackage instance to copy
+     * @throws NullPointerException if other is null
      */
     public ProductPackage(ProductPackage other) {
         Objects.requireNonNull(other, "ProductPackage to copy cannot be null");
+        this.id = other.id;
         this.name = other.name;
-        // create defensive copy of products
-        this.products = new ArrayList<>();
-        if (other.products != null) {
-            other.products.forEach(p -> this.products.add(p == null ? null : p.clone()));
-        }
+        // Create a shallow copy of the products list
+        this.products = new ArrayList<>(other.products);
     }
 
     /**
-     * Creates and returns a copy of this ProductPackage.
+     * Returns the package ID.
      *
-     * @return a new ProductPackage that duplicates this instance
+     * @return package identifier
      */
-    @Override
-    public ProductPackage clone() {
-        return new ProductPackage(this);
+    public String getId() {
+        return id;
+    }
+
+    /**
+     * Sets the package ID.
+     *
+     * @param id package identifier
+     */
+    public void setId(String id) {
+        this.id = id;
     }
 
     /**
      * Returns the package name.
      *
-     * @return package name string
+     * @return package name
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Sets the package name. Validates and normalizes input.
+     * Sets the package name.
      *
-     * @param name package name, must be non-null and non-empty
-     * @throws IllegalArgumentException if name is null or empty
+     * @param name package name
      */
     public void setName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Package name cannot be null or empty");
-        }
-        this.name = name.trim();
+        this.name = name;
     }
 
     /**
-     * Returns an unmodifiable view of products contained in this package.
-     * Each Product instance in the internal list is the internal instance;
-     * to avoid leaking mutable objects the caller should treat elements as read-only
-     * or the service layer should return copies (we already copy in services).
+     * Returns the list of products in this package.
      *
-     * @return unmodifiable list of products
+     * <p>Note: Returns the internal list reference. For defensive copying,
+     * use PackageService methods.</p>
+     *
+     * @return list of products
      */
     public List<Product> getProducts() {
-        return Collections.unmodifiableList(products);
+        return products;
     }
 
     /**
-     * Sets the products list for this package. Performs defensive copying and
-     * uses {@link Product#clone()} for each element to avoid sharing references.
+     * Sets the products list for this package.
      *
-     * @param products list of products (must not be null)
-     * @throws IllegalArgumentException if products is null
+     * @param products list of products
      */
     public void setProducts(List<Product> products) {
-        if (products == null) {
-            throw new IllegalArgumentException("Products list cannot be null");
-        }
-        // defensive deep copy using Prototype.copy()
-        List<Product> copy = new ArrayList<>(products.size());
-        for (Product p : products) {
-            copy.add(p == null ? null : p.clone());
-        }
-        this.products = copy;
+        this.products = products != null ? new ArrayList<>(products) : new ArrayList<>();
     }
 
     /**
-     * Adds a product to the package. The product is defensively copied before storage.
+     * Equality is based on the package ID.
      *
-     * @param product product to add (may be null)
-     */
-    public void addProduct(Product product) {
-        this.products.add(product == null ? null : product.clone());
-    }
-
-    /**
-     * Removes a product from the package using equality (based on Product.equals).
-     *
-     * @param product product to remove
-     * @return true if removed, false otherwise
-     */
-    public boolean removeProduct(Product product) {
-        return this.products.remove(product);
-    }
-
-    /**
-     * Returns the number of products contained in the package.
-     *
-     * @return product count (0 if none)
-     */
-    public int getProductCount() {
-        return this.products == null ? 0 : this.products.size();
-    }
-
-    /**
-     * Equality is based on the package {@code name}. Two packages with the same
-     * name are considered equal for domain-level identity. This matches the
-     * lightweight identity used in earlier designs (no database id present).
+     * <p>Two packages with the same ID are considered equal for
+     * domain-level identity.</p>
      *
      * @param o other object to compare
-     * @return true if equal by name
+     * @return true if equal by ID
      */
     @Override
     public boolean equals(Object o) {
@@ -157,17 +141,17 @@ public class ProductPackage implements Prototype<ProductPackage> {
         if (o == null || getClass() != o.getClass()) return false;
 
         ProductPackage that = (ProductPackage) o;
-        return Objects.equals(name, that.name);
+        return Objects.equals(id, that.id);
     }
 
     /**
-     * Hash code computed from package name.
+     * Hash code computed from package ID.
      *
      * @return hash code integer
      */
     @Override
     public int hashCode() {
-        return name == null ? 0 : name.hashCode();
+        return id == null ? 0 : id.hashCode();
     }
 
     /**
@@ -178,7 +162,8 @@ public class ProductPackage implements Prototype<ProductPackage> {
     @Override
     public String toString() {
         return "ProductPackage{" +
-                "name='" + name + '\'' +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
                 ", productsCount=" + (products == null ? 0 : products.size()) +
                 '}';
     }

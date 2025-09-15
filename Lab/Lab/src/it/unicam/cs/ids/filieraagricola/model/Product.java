@@ -2,18 +2,17 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import java.time.LocalDate;
 import java.util.Objects;
-import java.util.UUID; // Added import for UUID
+import java.util.UUID;
 
 /**
  * Represents an agricultural product within the supply chain platform.
  *
- * <p>This class is a plain Java object (POJO) which implements the Prototype
- * pattern via {@link #clone()}. It exposes a no-arg constructor (for
- * frameworks), a full parameterized constructor, a copy constructor and
- * validated setters/getters. All public and private methods are documented in
- * English to guarantee clarity and maintainability.</p>
+ * <p>This class is a pure domain model following the Single Responsibility
+ * Principle. It focuses solely on representing product data without business
+ * logic. All business operations (checking if organic, fresh, etc.) are
+ * delegated to the ProductService.</p>
  */
-public class Product implements Prototype<Product> {
+public class Product {
 
     private String id;
     private String name;
@@ -27,27 +26,23 @@ public class Product implements Prototype<Product> {
     /**
      * Default no-argument constructor for frameworks (e.g., Spring, JPA).
      * Generates a unique ID for the product.
-     *
-     * <p>Leaves other fields uninitialized (null). Use setters to populate fields or
-     * use the parameterized constructor for validated construction.</p>
      */
     public Product() {
-        this.id = UUID.randomUUID().toString(); // Automatically generate ID
+        this.id = UUID.randomUUID().toString();
     }
 
     /**
-     * Full constructor that validates and normalizes input values.
-     * If the ID is null or empty, a new one is generated.
+     * Full constructor that creates a product with all fields.
+     * If the ID is null or empty, a new UUID is generated.
      *
-     * @param id                unique identifier for the product, if null or empty, a new UUID will be generated
-     * @param name              commercial product name, must be non-null and non-empty
-     * @param category          product category (e.g., "vegetables"), must be non-null and non-empty
-     * @param description       human-readable description, must be non-null and non-empty
-     * @param cultivationMethod cultivation method (e.g., "organic"), must be non-null and non-empty
-     * @param certifications    certifications information (may be empty but not null)
-     * @param productionDate    production/harvest date, must be non-null and not in the future
-     * @param producerId        identifier of the producer, must be non-null and non-empty
-     * @throws IllegalArgumentException if any required argument is invalid
+     * @param id                unique identifier for the product
+     * @param name              commercial product name
+     * @param category          product category (e.g., "vegetables")
+     * @param description       human-readable description
+     * @param cultivationMethod cultivation method (e.g., "organic")
+     * @param certifications    certifications information
+     * @param productionDate    production/harvest date
+     * @param producerId        identifier of the producer
      */
     public Product(String id,
                    String name,
@@ -57,28 +52,23 @@ public class Product implements Prototype<Product> {
                    String certifications,
                    LocalDate productionDate,
                    String producerId) {
-        this.id = (id == null || id.trim().isEmpty()) ? UUID.randomUUID().toString() : id.trim(); // Ensure ID is always set and trimmed
-        validateName(name);
-        validateCategory(category);
-        validateDescription(description);
-        validateCultivationMethod(cultivationMethod);
-        validateProductionDate(productionDate);
-        validateProducerId(producerId);
-
-        this.name = name.trim();
-        this.category = category.toLowerCase().trim();
-        this.description = description.trim();
-        this.cultivationMethod = cultivationMethod.toLowerCase().trim();
-        this.certifications = certifications == null ? "" : certifications.trim();
+        this.id = (id == null || id.trim().isEmpty())
+                ? UUID.randomUUID().toString()
+                : id.trim();
+        this.name = name;
+        this.category = category;
+        this.description = description;
+        this.cultivationMethod = cultivationMethod;
+        this.certifications = certifications;
         this.productionDate = productionDate;
-        this.producerId = producerId.trim();
+        this.producerId = producerId;
     }
 
     /**
-     * Copy constructor used to implement the Prototype pattern.
+     * Copy constructor for creating a new instance from an existing product.
      *
-     * @param other the product instance to copy, must not be null
-     * @throws NullPointerException if {@code other} is null
+     * @param other the product instance to copy
+     * @throws NullPointerException if other is null
      */
     public Product(Product other) {
         Objects.requireNonNull(other, "Product to copy cannot be null");
@@ -93,17 +83,6 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Creates and returns a copy of this Product instance.
-     * This method implements the Prototype design pattern.
-     *
-     * @return a new Product instance that is a copy of this instance
-     */
-    @Override
-    public Product clone() {
-        return new Product(this);
-    }
-
-    /**
      * Returns the product id.
      *
      * @return product id, never null after construction
@@ -113,14 +92,12 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Sets the product id. Validates input and normalizes whitespace.
+     * Sets the product id.
      *
-     * @param id unique identifier, must be non-null and non-empty
-     * @throws IllegalArgumentException if id is null or empty
+     * @param id unique identifier
      */
     public void setId(String id) {
-        validateId(id);
-        this.id = id.trim();
+        this.id = id;
     }
 
     /**
@@ -133,14 +110,12 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Sets the product name. Validates input and trims whitespace.
+     * Sets the product name.
      *
-     * @param name product name, must be non-null and non-empty
-     * @throws IllegalArgumentException if name is null or empty
+     * @param name product name
      */
     public void setName(String name) {
-        validateName(name);
-        this.name = name.trim();
+        this.name = name;
     }
 
     /**
@@ -153,14 +128,12 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Sets the product category. Validates input and normalizes to lowercase.
+     * Sets the product category.
      *
-     * @param category product category, must be non-null and non-empty
-     * @throws IllegalArgumentException if category is null or empty
+     * @param category product category
      */
     public void setCategory(String category) {
-        validateCategory(category);
-        this.category = category.toLowerCase().trim();
+        this.category = category;
     }
 
     /**
@@ -173,14 +146,12 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Sets the product description. Validates input and trims whitespace.
+     * Sets the product description.
      *
-     * @param description product description, must be non-null and non-empty
-     * @throws IllegalArgumentException if description is null or empty
+     * @param description product description
      */
     public void setDescription(String description) {
-        validateDescription(description);
-        this.description = description.trim();
+        this.description = description;
     }
 
     /**
@@ -193,32 +164,30 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Sets the cultivation method. Validates input and normalizes to lowercase.
+     * Sets the cultivation method.
      *
-     * @param cultivationMethod cultivation method, must be non-null and non-empty
-     * @throws IllegalArgumentException if cultivationMethod is null or empty
+     * @param cultivationMethod cultivation method
      */
     public void setCultivationMethod(String cultivationMethod) {
-        validateCultivationMethod(cultivationMethod);
-        this.cultivationMethod = cultivationMethod.toLowerCase().trim();
+        this.cultivationMethod = cultivationMethod;
     }
 
     /**
-     * Returns certifications string (may be empty).
+     * Returns certifications string.
      *
-     * @return certifications string
+     * @return certifications string (may be null or empty)
      */
     public String getCertifications() {
         return certifications;
     }
 
     /**
-     * Sets the certifications string. Null is treated as an empty string.
+     * Sets the certifications string.
      *
-     * @param certifications certifications information (nullable)
+     * @param certifications certifications information
      */
     public void setCertifications(String certifications) {
-        this.certifications = certifications == null ? "" : certifications.trim();
+        this.certifications = certifications;
     }
 
     /**
@@ -231,13 +200,11 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Sets the production date. Validates the date is not null and not in the future.
+     * Sets the production date.
      *
-     * @param productionDate production/harvest date, must be non-null and not a future date
-     * @throws IllegalArgumentException if productionDate is null or in the future
+     * @param productionDate production/harvest date
      */
     public void setProductionDate(LocalDate productionDate) {
-        validateProductionDate(productionDate);
         this.productionDate = productionDate;
     }
 
@@ -251,144 +218,19 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Sets the producer identifier. Validates input and trims whitespace.
+     * Sets the producer identifier.
      *
-     * @param producerId producer id, must be non-null and non-empty
-     * @throws IllegalArgumentException if producerId is null or empty
+     * @param producerId producer id
      */
     public void setProducerId(String producerId) {
-        validateProducerId(producerId);
-        this.producerId = producerId.trim();
+        this.producerId = producerId;
     }
 
     /**
-     * Checks if this product is organic based on cultivation method content.
-     *
-     * <p>This method performs a simple keyword check: it returns {@code true}
-     * if the cultivation method contains "organic" or "biologico". The check is
-     * case-insensitive because cultivationMethod is normalized to lowercase.</p>
-     *
-     * @return {@code true} if cultivation method suggests organic farming
-     */
-    public boolean isOrganic() {
-        return cultivationMethod != null &&
-                (cultivationMethod.contains("organic") || cultivationMethod.contains("biologico"));
-    }
-
-    /**
-     * Returns whether the product contains any certifications.
-     *
-     * @return {@code true} if certifications string is not null or empty after trimming
-     */
-    public boolean hasCertifications() {
-        return certifications != null && !certifications.trim().isEmpty();
-    }
-
-    /**
-     * Returns whether the product is considered "fresh" (produced within last 30 days).
-     *
-     * @return {@code true} if productionDate is within the last 30 days
-     */
-    public boolean isFresh() {
-        return productionDate != null && productionDate.isAfter(LocalDate.now().minusDays(30));
-    }
-
-    // ----------------- validation helpers (private) -----------------
-
-    /**
-     * Validates the product id parameter.
-     *
-     * @param id candidate id
-     * @throws IllegalArgumentException if id is null or empty
-     */
-    private static void validateId(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Product ID cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates the product name parameter.
-     *
-     * @param name candidate name
-     * @throws IllegalArgumentException if name is null or empty
-     */
-    private static void validateName(String name) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new IllegalArgumentException("Product name cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates the product category parameter.
-     *
-     * @param category candidate category
-     * @throws IllegalArgumentException if category is null or empty
-     */
-    private static void validateCategory(String category) {
-        if (category == null || category.trim().isEmpty()) {
-            throw new IllegalArgumentException("Product category cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates the product description parameter.
-     *
-     * @param description candidate description
-     * @throws IllegalArgumentException if description is null or empty
-     */
-    private static void validateDescription(String description) {
-        if (description == null || description.trim().isEmpty()) {
-            throw new IllegalArgumentException("Product description cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates the cultivation method parameter.
-     *
-     * @param method candidate cultivation method
-     * @throws IllegalArgumentException if method is null or empty
-     */
-    private static void validateCultivationMethod(String method) {
-        if (method == null || method.trim().isEmpty()) {
-            throw new IllegalArgumentException("Cultivation method cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates the production date parameter.
-     *
-     * @param date candidate production date
-     * @throws IllegalArgumentException if date is null or in the future
-     */
-    private static void validateProductionDate(LocalDate date) {
-        if (date == null) {
-            throw new IllegalArgumentException("Production date cannot be null");
-        }
-        if (date.isAfter(LocalDate.now())) {
-            throw new IllegalArgumentException("Production date cannot be in the future");
-        }
-    }
-
-    /**
-     * Validates the producer id parameter.
-     *
-     * @param producerId candidate producer identifier
-     * @throws IllegalArgumentException if producerId is null or empty
-     */
-    private static void validateProducerId(String producerId) {
-        if (producerId == null || producerId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Producer ID cannot be null or empty");
-        }
-    }
-
-    // ----------------- equals/hashCode/toString -----------------
-
-    /**
-     * Equality is based on product {@code id} (if present).
+     * Equality is based on product id.
      *
      * @param o other object to compare
-     * @return {@code true} if both objects are Product instances with the same id
+     * @return true if both objects are Product instances with the same id
      */
     @Override
     public boolean equals(Object o) {
@@ -400,7 +242,7 @@ public class Product implements Prototype<Product> {
     }
 
     /**
-     * Hash code implementation based on {@code id}.
+     * Hash code implementation based on id.
      *
      * @return hash code derived from id or 0 if id is null
      */
