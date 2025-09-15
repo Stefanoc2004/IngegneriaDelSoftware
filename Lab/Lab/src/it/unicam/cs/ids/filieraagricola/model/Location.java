@@ -1,225 +1,140 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 import java.util.Objects;
+import java.util.UUID;
 
 /**
- * Represents a geographical location within the platform.
+ * Represents a geographical location within the agricultural supply chain platform.
  *
- * <p>This class stores coordinate information along with address details
- * and implements the Prototype pattern for defensive copying.</p>
+ * <p>This class models a location with a unique identifier, name, address, and optional description.
+ * It is a pure data model without business logic.
+ * Validation and business rules related to locations are handled by {@link it.unicam.cs.ids.filieraagricola.service.LocationService}.</p>
  */
-public class Location implements Prototype<Location> {
-
-    private double latitude;
-    private double longitude;
-    private String address;
-    private String municipality;
-    private String province;
-    private String postalCode;
+public class Location {
 
     /**
-     * Default constructor for frameworks.
+     * Unique identifier for the location.
      */
-    public Location() {
-        // for frameworks
-    }
+    private final String id;
 
     /**
-     * Full constructor with validation.
+     * Name of the location.
+     */
+    private final String name;
+
+    /**
+     * Address of the location.
+     */
+    private final String address;
+
+    /**
+     * Optional description of the location.
+     */
+    private final String description;
+
+    /**
+     * Constructs a new Location instance with a generated unique identifier.
      *
-     * @param latitude    geographical latitude (-90 to 90)
-     * @param longitude   geographical longitude (-180 to 180)
-     * @param address     street address (must not be null or empty)
-     * @param municipality municipality name (must not be null or empty)
-     * @param province    province name (must not be null or empty)
-     * @param postalCode  postal code (must not be null or empty)
-     * @throws IllegalArgumentException if any validation fails
+     * @param name        The name of the location.
+     * @param address     The address of the location.
+     * @param description Optional description of the location.
      */
-    public Location(double latitude, double longitude, String address,
-                    String municipality, String province, String postalCode) {
-        validateCoordinates(latitude, longitude);
-        validateAddress(address);
-        validateMunicipality(municipality);
-        validateProvince(province);
-        validatePostalCode(postalCode);
-
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.address = address.trim();
-        this.municipality = municipality.trim();
-        this.province = province.trim();
-        this.postalCode = postalCode.trim();
+    public Location(String name, String address, String description) {
+        this.id = UUID.randomUUID().toString();
+        this.name = name;
+        this.address = address;
+        this.description = description;
     }
 
     /**
-     * Copy constructor for Prototype pattern.
+     * Constructs a new Location instance with a specified identifier.
+     * Typically used when reconstructing from persistence.
      *
-     * @param other Location to copy (must not be null)
-     * @throws NullPointerException if other is null
+     * @param id          The unique identifier of the location.
+     * @param name        The name of the location.
+     * @param address     The address of the location.
+     * @param description Optional description of the location.
      */
-    public Location(Location other) {
-        Objects.requireNonNull(other, "Location to copy cannot be null");
-        this.latitude = other.latitude;
-        this.longitude = other.longitude;
-        this.address = other.address;
-        this.municipality = other.municipality;
-        this.province = other.province;
-        this.postalCode = other.postalCode;
+    public Location(String id, String name, String address, String description) {
+        this.id = id;
+        this.name = name;
+        this.address = address;
+        this.description = description;
     }
 
     /**
-     * Creates a deep copy of this Location.
+     * Returns the unique identifier of this location.
      *
-     * @return new Location instance identical to this one
+     * @return The location ID.
      */
-    @Override
-    public Location clone() {
-        return new Location(this);
+    public String getId() {
+        return id;
     }
 
-    // Getters and setters with validation
-    public double getLatitude() {
-        return latitude;
+    /**
+     * Returns the name of this location.
+     *
+     * @return The location name.
+     */
+    public String getName() {
+        return name;
     }
 
-    public void setLatitude(double latitude) {
-        validateLatitude(latitude);
-        this.latitude = latitude;
-    }
-
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        validateLongitude(longitude);
-        this.longitude = longitude;
-    }
-
+    /**
+     * Returns the address of this location.
+     *
+     * @return The location address.
+     */
     public String getAddress() {
         return address;
     }
 
-    public void setAddress(String address) {
-        validateAddress(address);
-        this.address = address.trim();
-    }
-
-    public String getMunicipality() {
-        return municipality;
-    }
-
-    public void setMunicipality(String municipality) {
-        validateMunicipality(municipality);
-        this.municipality = municipality.trim();
-    }
-
-    public String getProvince() {
-        return province;
-    }
-
-    public void setProvince(String province) {
-        validateProvince(province);
-        this.province = province.trim();
-    }
-
-    public String getPostalCode() {
-        return postalCode;
-    }
-
-    public void setPostalCode(String postalCode) {
-        validatePostalCode(postalCode);
-        this.postalCode = postalCode.trim();
+    /**
+     * Returns the optional description of this location.
+     *
+     * @return The location description, or null if none.
+     */
+    public String getDescription() {
+        return description;
     }
 
     /**
-     * Calculates distance to another location using Haversine formula.
+     * Indicates whether some other object is "equal to" this Location.
+     * Two Location objects are considered equal if they have the same ID.
      *
-     * @param other other location (must not be null)
-     * @return distance in kilometers
-     * @throws NullPointerException if other is null
+     * @param o The reference object with which to compare.
+     * @return True if this object is equal to the o argument; false otherwise.
      */
-    public double distanceTo(Location other) {
-        Objects.requireNonNull(other, "Other location cannot be null");
-
-        double earthRadius = 6371; // Earth's radius in kilometers
-        double dLat = Math.toRadians(other.latitude - this.latitude);
-        double dLon = Math.toRadians(other.longitude - this.longitude);
-
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(Math.toRadians(this.latitude)) * Math.cos(Math.toRadians(other.latitude)) *
-                        Math.sin(dLon/2) * Math.sin(dLon/2);
-
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        return earthRadius * c;
-    }
-
-    // Private validation methods
-    private static void validateCoordinates(double latitude, double longitude) {
-        validateLatitude(latitude);
-        validateLongitude(longitude);
-    }
-
-    private static void validateLatitude(double latitude) {
-        if (latitude < -90.0 || latitude > 90.0) {
-            throw new IllegalArgumentException("Latitude must be between -90 and 90 degrees");
-        }
-    }
-
-    private static void validateLongitude(double longitude) {
-        if (longitude < -180.0 || longitude > 180.0) {
-            throw new IllegalArgumentException("Longitude must be between -180 and 180 degrees");
-        }
-    }
-
-    private static void validateAddress(String address) {
-        if (address == null || address.trim().isEmpty()) {
-            throw new IllegalArgumentException("Address cannot be null or empty");
-        }
-    }
-
-    private static void validateMunicipality(String municipality) {
-        if (municipality == null || municipality.trim().isEmpty()) {
-            throw new IllegalArgumentException("Municipality cannot be null or empty");
-        }
-    }
-
-    private static void validateProvince(String province) {
-        if (province == null || province.trim().isEmpty()) {
-            throw new IllegalArgumentException("Province cannot be null or empty");
-        }
-    }
-
-    private static void validatePostalCode(String postalCode) {
-        if (postalCode == null || postalCode.trim().isEmpty()) {
-            throw new IllegalArgumentException("Postal code cannot be null or empty");
-        }
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
+        if (!(o instanceof Location)) return false;
         Location location = (Location) o;
-        return Double.compare(location.latitude, latitude) == 0 &&
-                Double.compare(location.longitude, longitude) == 0 &&
-                Objects.equals(address, location.address) &&
-                Objects.equals(municipality, location.municipality);
+        return Objects.equals(id, location.id);
     }
 
+    /**
+     * Returns a hash code value for this Location.
+     * The hash code is based on the location ID.
+     *
+     * @return A hash code value for this object.
+     */
     @Override
     public int hashCode() {
-        return Objects.hash(latitude, longitude, address, municipality);
+        return Objects.hash(id);
     }
 
+    /**
+     * Returns a string representation of this Location.
+     *
+     * @return A string representation including id, name, and address.
+     */
     @Override
     public String toString() {
         return "Location{" +
-                "latitude=" + latitude +
-                ", longitude=" + longitude +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
                 ", address='" + address + '\'' +
-                ", municipality='" + municipality + '\'' +
                 '}';
     }
 }
