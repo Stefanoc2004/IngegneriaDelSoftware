@@ -1,7 +1,6 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 /**
  * Represents the participation of an actor in a specific event.
