@@ -14,9 +14,14 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Service that manages Order lifecycle.
+ *
+ * <p>This service uses Spring Data repositories to persist orders and order items.
+ * Methods are transactional where a group of operations must succeed or fail together.</p>
+ */
 @Service
 public class OrderService {
-
 
     @Autowired
     private OrderRepository orderRepository;
@@ -24,7 +29,6 @@ public class OrderService {
     private OrderItemRepository orderItemRepository;
     @Autowired
     private UserRepository userRepository;
-
 
     public List<Order> findAll() {
         return orderRepository.findAll();
@@ -42,7 +46,6 @@ public class OrderService {
         return new LinkedList<>();
     }
 
-
     public List<Order> findBySeller(String sellerId) {
         Optional<User> opt = userRepository.findById(sellerId);
         if (opt.isPresent()) {
@@ -50,7 +53,6 @@ public class OrderService {
         }
         return new LinkedList<>();
     }
-
 
     //TODO Create dell'order
 
@@ -71,10 +73,5 @@ public class OrderService {
             return true;
         }
         return false;
-     }
-
-
-
-
-
+    }
 }
