@@ -1,22 +1,30 @@
 package it.unicam.cs.ids.filieraagricola.service;
 
 import it.unicam.cs.ids.filieraagricola.model.Order;
+import it.unicam.cs.ids.filieraagricola.model.Order.OrderItem;
 import it.unicam.cs.ids.filieraagricola.model.OrderStatus;
+import it.unicam.cs.ids.filieraagricola.service.exception.NotFoundException;
+import it.unicam.cs.ids.filieraagricola.service.exception.ValidationException;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Service class for managing orders in the agricultural supply chain platform.
  *
  * <p>This service handles the complete order lifecycle including creation, status updates,
- * tracking, and reporting. It uses defensive copying to ensure data integrity and follows
- * the same patterns as other services in the platform.</p>
- *
- * <p>All orders are stored internally and defensive copies are returned to maintain
- * encapsulation. The service supports operations like order creation, status management,
- * search, filtering, and analytics.</p>
+ * tracking, and reporting. It ensures data integrity through validation and manages
+ * order state transitions. Order objects are treated as immutable data transfer objects
+ * once created, with updates resulting in new instances or modifications handled internally by the service.</p>
  */
 public class OrderService {
 
@@ -43,115 +51,136 @@ public class OrderService {
     /**
      * Creates a new order in the system.
      *
-     * <p>The order is stored as a defensive copy and added to various indexes
-     * for efficient retrieval by status, buyer, and seller.</p>
-     *
-     * @param order the order to create (must not be null)
-     * @return defensive copy of the created order
-     * @throws IllegalArgumentException if order is null or already exists
+     * @param buyerId            Buyer identifier.
+     * @param sellerId           Seller identifier.
+     * @param orderItems         List of ordered items.
+     * @param expectedDeliveryDate Expected delivery date.
+     * @param deliveryAddress    Delivery address.
+     * @param paymentMethod      Payment method.
+     * @param deliveryMethod     Delivery method.
+     * @param notes              Additional notes.
+     * @param organicCertified   Whether the order qualifies for organic certification.
+     * @return The newly created Order instance.
+     * @throws ValidationException If any validation fails.
      */
-    public Order createOrder(Order order) {
-        Objects.requireNonNull(order, "Order cannot be null");
+    public Order createOrder(String buyerId, String sellerId, List<OrderItem> orderItems,
+                             LocalDateTime expectedDeliveryDate, String deliveryAddress,
+                             String paymentMethod, String deliveryMethod, String notes,
+                             boolean organicCertified) {
+        validateOrderCreationData(buyerId, sellerId, orderItems);
 
-        // Check if order already exists
-        if (findOrderById(order.getId()).isPresent()) {
-            throw new IllegalArgumentException("Order with ID " + order.getId() + " already exists");
-        }
+        double totalAmount = calculateTotalAmount(orderItems);
+        LocalDateTime orderDate = LocalDateTime.now();
+        OrderStatus status = OrderStatus.PENDING;
 
-        Order orderCopy = copyOrder(order);
-        addOrderToIndexes(orderCopy);
+        Order newOrder = new Order(
+                buyerId.trim(), sellerId.trim(), orderItems, totalAmount, status, orderDate,
+                expectedDeliveryDate, null, // actualDeliveryDate is null initially
+                deliveryAddress != null ? deliveryAddress.trim() : null,
+                paymentMethod != null ? paymentMethod.trim() : null,
+                notes != null ? notes.trim() : null,
+                organicCertified,
+                deliveryMethod != null ? deliveryMethod.trim() : null
+        );
 
-        return copyOrder(orderCopy);
+        addOrderToIndexes(newOrder);
+        return newOrder;
     }
 
     /**
      * Finds an order by its unique identifier.
      *
-     * @param orderId the order ID to search for (must not be null)
-     * @return Optional containing a defensive copy of the found order or empty if not found
-     * @throws IllegalArgumentException if orderId is null
+     * @param orderId The order ID to search for.
+     * @return An Optional containing the found order or empty if not found.
+     * @throws ValidationException If orderId is null or empty.
      */
     public Optional<Order> findOrderById(String orderId) {
-        Objects.requireNonNull(orderId, "Order ID cannot be null");
-
+        validateId(orderId);
         return orderList.stream()
                 .filter(order -> order.getId().equals(orderId))
-                .findFirst()
-                .map(this::copyOrder);
+                .findFirst();
     }
 
     /**
      * Returns all orders for a specific buyer.
      *
-     * @param buyerId the buyer ID (must not be null)
-     * @return list of defensive copies of orders for the specified buyer
-     * @throws IllegalArgumentException if buyerId is null
+     * @param buyerId The buyer ID.
+     * @return An unmodifiable list of orders for the specified buyer.
+     * @throws ValidationException If buyerId is null or empty.
      */
     public List<Order> getOrdersByBuyer(String buyerId) {
-        Objects.requireNonNull(buyerId, "Buyer ID cannot be null");
-
-        return ordersByBuyer.getOrDefault(buyerId, Collections.emptyList()).stream()
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+        validateBuyerId(buyerId);
+        return Collections.unmodifiableList(ordersByBuyer.getOrDefault(buyerId, Collections.emptyList()));
     }
 
     /**
      * Returns all orders for a specific seller.
      *
-     * @param sellerId the seller ID (must not be null)
-     * @return list of defensive copies of orders for the specified seller
-     * @throws IllegalArgumentException if sellerId is null
+     * @param sellerId The seller ID.
+     * @return An unmodifiable list of orders for the specified seller.
+     * @throws ValidationException If sellerId is null or empty.
      */
     public List<Order> getOrdersBySeller(String sellerId) {
-        Objects.requireNonNull(sellerId, "Seller ID cannot be null");
-
-        return ordersBySeller.getOrDefault(sellerId, Collections.emptyList()).stream()
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+        validateSellerId(sellerId);
+        return Collections.unmodifiableList(ordersBySeller.getOrDefault(sellerId, Collections.emptyList()));
     }
 
     /**
      * Returns all orders with a specific status.
      *
-     * @param status the order status (must not be null)
-     * @return list of defensive copies of orders with the specified status
-     * @throws IllegalArgumentException if status is null
+     * @param status The order status.
+     * @return An unmodifiable list of orders with the specified status.
+     * @throws ValidationException If status is null.
      */
     public List<Order> getOrdersByStatus(OrderStatus status) {
-        Objects.requireNonNull(status, "Order status cannot be null");
-
-        return ordersByStatus.get(status).stream()
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+        Objects.requireNonNull(status, "Order status cannot be null.");
+        return Collections.unmodifiableList(ordersByStatus.getOrDefault(status, Collections.emptyList()));
     }
 
     /**
      * Updates the status of an existing order.
      *
-     * @param orderId the order ID (must not be null)
-     * @param newStatus the new status (must not be null)
-     * @return true if the order status was successfully updated
-     * @throws IllegalArgumentException if orderId or newStatus is null, or order not found
+     * @param orderId   The order ID.
+     * @param newStatus The new status.
+     * @return True if the order status was successfully updated.
+     * @throws ValidationException If orderId or newStatus is null/empty, or order not found.
+     * @throws NotFoundException If the order is not found.
      */
     public boolean updateOrderStatus(String orderId, OrderStatus newStatus) {
-        Objects.requireNonNull(orderId, "Order ID cannot be null");
-        Objects.requireNonNull(newStatus, "New status cannot be null");
+        validateId(orderId);
+        Objects.requireNonNull(newStatus, "New status cannot be null.");
 
         Optional<Integer> indexOpt = findOrderIndex(orderId);
         if (indexOpt.isEmpty()) {
-            throw new IllegalArgumentException("Order with ID " + orderId + " not found");
+            throw new NotFoundException("Order with ID " + orderId + " not found.");
         }
 
         int index = indexOpt.get();
-        Order order = orderList.get(index);
-        OrderStatus oldStatus = order.getStatus();
+        Order oldOrder = orderList.get(index);
+        OrderStatus oldStatus = oldOrder.getStatus();
 
-        // Update the order status
-        order.setStatus(newStatus);
+        if (oldStatus == newStatus) {
+            return false; // No change needed
+        }
+
+        LocalDateTime actualDeliveryDate = oldOrder.getActualDeliveryDate();
+        if (newStatus == OrderStatus.DELIVERED && actualDeliveryDate == null) {
+            actualDeliveryDate = LocalDateTime.now();
+        } else if (newStatus != OrderStatus.DELIVERED) {
+            actualDeliveryDate = null; // Clear actual delivery date if status changes from DELIVERED
+        }
+
+        Order updatedOrder = new Order(
+                oldOrder.getId(), oldOrder.getBuyerId(), oldOrder.getSellerId(), oldOrder.getOrderItems(),
+                oldOrder.getTotalAmount(), newStatus, oldOrder.getOrderDate(), oldOrder.getExpectedDeliveryDate(),
+                actualDeliveryDate, oldOrder.getDeliveryAddress(), oldOrder.getPaymentMethod(), oldOrder.getNotes(),
+                oldOrder.isOrganicCertified(), oldOrder.getDeliveryMethod()
+        );
 
         // Update status indexes
-        ordersByStatus.get(oldStatus).remove(order);
-        ordersByStatus.get(newStatus).add(order);
+        ordersByStatus.get(oldStatus).remove(oldOrder);
+        ordersByStatus.get(newStatus).add(updatedOrder);
+        orderList.set(index, updatedOrder); // Update in main list
 
         return true;
     }
@@ -159,211 +188,213 @@ public class OrderService {
     /**
      * Updates an existing order's information.
      *
-     * @param updatedOrder the order with updated information (must not be null)
-     * @return true if the order was successfully updated
-     * @throws IllegalArgumentException if order is null or not found
+     * @param orderId            The ID of the order to update.
+     * @param buyerId            New buyer identifier.
+     * @param sellerId           New seller identifier.
+     * @param orderItems         New list of ordered items.
+     * @param status             New order status.
+     * @param expectedDeliveryDate New expected delivery date.
+     * @param actualDeliveryDate New actual delivery date.
+     * @param deliveryAddress    New delivery address.
+     * @param paymentMethod      New payment method.
+     * @param notes              New additional notes.
+     * @param organicCertified   New organic certification status.
+     * @param deliveryMethod     New delivery method.
+     * @return The updated Order instance.
+     * @throws ValidationException If any validation fails.
+     * @throws NotFoundException If the order is not found.
      */
-    public boolean updateOrder(Order updatedOrder) {
-        Objects.requireNonNull(updatedOrder, "Updated order cannot be null");
+    public Order updateOrder(String orderId, String buyerId, String sellerId, List<OrderItem> orderItems,
+                             OrderStatus status, LocalDateTime expectedDeliveryDate, LocalDateTime actualDeliveryDate,
+                             String deliveryAddress, String paymentMethod, String notes,
+                             boolean organicCertified, String deliveryMethod) {
+        validateId(orderId);
+        validateOrderCreationData(buyerId, sellerId, orderItems);
+        Objects.requireNonNull(status, "Order status cannot be null.");
 
-        Optional<Integer> indexOpt = findOrderIndex(updatedOrder.getId());
+        Optional<Integer> indexOpt = findOrderIndex(orderId);
         if (indexOpt.isEmpty()) {
-            throw new IllegalArgumentException("Order with ID " + updatedOrder.getId() + " not found");
+            throw new NotFoundException("Order with ID " + orderId + " not found.");
         }
 
         int index = indexOpt.get();
         Order oldOrder = orderList.get(index);
-        Order newOrderCopy = copyOrder(updatedOrder);
 
-        // Remove from old indexes
+        double newTotalAmount = calculateTotalAmount(orderItems);
+
+        Order updatedOrder = new Order(
+                orderId, buyerId.trim(), sellerId.trim(), orderItems, newTotalAmount, status, oldOrder.getOrderDate(),
+                expectedDeliveryDate, actualDeliveryDate,
+                deliveryAddress != null ? deliveryAddress.trim() : null,
+                paymentMethod != null ? paymentMethod.trim() : null,
+                notes != null ? notes.trim() : null,
+                organicCertified,
+                deliveryMethod != null ? deliveryMethod.trim() : null
+        );
+
+        // Remove from old indexes and add to new ones if buyer/seller/status changed
         removeOrderFromIndexes(oldOrder);
+        addOrderToIndexes(updatedOrder);
+        orderList.set(index, updatedOrder); // Update in main list
 
-        // Update in main list
-        orderList.set(index, newOrderCopy);
-
-        // Add to new indexes
-        addOrderToIndexes(newOrderCopy);
-
-        return true;
+        return updatedOrder;
     }
 
     /**
      * Cancels an order by setting its status to CANCELLED.
      *
-     * @param orderId the order ID (must not be null)
-     * @return true if the order was successfully cancelled
-     * @throws IllegalArgumentException if orderId is null or order not found or already delivered
+     * @param orderId The order ID.
+     * @return True if the order was successfully cancelled.
+     * @throws ValidationException If orderId is null/empty, order not found, or already delivered.
+     * @throws NotFoundException If the order is not found.
      */
     public boolean cancelOrder(String orderId) {
-        Objects.requireNonNull(orderId, "Order ID cannot be null");
-
         Optional<Order> orderOpt = findOrderById(orderId);
         if (orderOpt.isEmpty()) {
-            throw new IllegalArgumentException("Order with ID " + orderId + " not found");
+            throw new NotFoundException("Order with ID " + orderId + " not found.");
         }
-
-        Order order = orderOpt.get();
-        if (order.isDelivered()) {
-            throw new IllegalArgumentException("Cannot cancel a delivered order");
+        if (isDelivered(orderOpt.get())) {
+            throw new ValidationException("Cannot cancel a delivered order.");
         }
-
         return updateOrderStatus(orderId, OrderStatus.CANCELLED);
     }
 
     /**
      * Confirms a pending order by setting its status to CONFIRMED.
      *
-     * @param orderId the order ID (must not be null)
-     * @return true if the order was successfully confirmed
-     * @throws IllegalArgumentException if orderId is null or order not found or not pending
+     * @param orderId The order ID.
+     * @return True if the order was successfully confirmed.
+     * @throws ValidationException If orderId is null/empty, order not found, or not pending.
+     * @throws NotFoundException If the order is not found.
      */
     public boolean confirmOrder(String orderId) {
-        Objects.requireNonNull(orderId, "Order ID cannot be null");
-
         Optional<Order> orderOpt = findOrderById(orderId);
         if (orderOpt.isEmpty()) {
-            throw new IllegalArgumentException("Order with ID " + orderId + " not found");
+            throw new NotFoundException("Order with ID " + orderId + " not found.");
         }
-
-        Order order = orderOpt.get();
-        if (!order.isPending()) {
-            throw new IllegalArgumentException("Only pending orders can be confirmed");
+        if (!isPending(orderOpt.get())) {
+            throw new ValidationException("Only pending orders can be confirmed.");
         }
-
         return updateOrderStatus(orderId, OrderStatus.CONFIRMED);
     }
 
     /**
      * Marks an order as shipped by setting its status to SHIPPED.
      *
-     * @param orderId the order ID (must not be null)
-     * @return true if the order was successfully marked as shipped
-     * @throws IllegalArgumentException if orderId is null or order not found or not in processing
+     * @param orderId The order ID.
+     * @return True if the order was successfully marked as shipped.
+     * @throws ValidationException If orderId is null/empty, order not found, or not in processing.
+     * @throws NotFoundException If the order is not found.
      */
     public boolean shipOrder(String orderId) {
-        Objects.requireNonNull(orderId, "Order ID cannot be null");
-
         Optional<Order> orderOpt = findOrderById(orderId);
         if (orderOpt.isEmpty()) {
-            throw new IllegalArgumentException("Order with ID " + orderId + " not found");
+            throw new NotFoundException("Order with ID " + orderId + " not found.");
         }
-
-        Order order = orderOpt.get();
-        if (!order.isProcessing()) {
-            throw new IllegalArgumentException("Only processing orders can be shipped");
+        if (!isProcessing(orderOpt.get())) {
+            throw new ValidationException("Only processing orders can be shipped.");
         }
-
         return updateOrderStatus(orderId, OrderStatus.SHIPPED);
     }
 
     /**
      * Marks an order as delivered by setting its status to DELIVERED.
      *
-     * @param orderId the order ID (must not be null)
-     * @return true if the order was successfully marked as delivered
-     * @throws IllegalArgumentException if orderId is null or order not found or not shipped
+     * @param orderId The order ID.
+     * @return True if the order was successfully marked as delivered.
+     * @throws ValidationException If orderId is null/empty, order not found, or not shipped.
+     * @throws NotFoundException If the order is not found.
      */
     public boolean deliverOrder(String orderId) {
-        Objects.requireNonNull(orderId, "Order ID cannot be null");
-
         Optional<Order> orderOpt = findOrderById(orderId);
         if (orderOpt.isEmpty()) {
-            throw new IllegalArgumentException("Order with ID " + orderId + " not found");
+            throw new NotFoundException("Order with ID " + orderId + " not found.");
         }
-
-        Order order = orderOpt.get();
-        if (!order.isShipped()) {
-            throw new IllegalArgumentException("Only shipped orders can be delivered");
+        if (!isShipped(orderOpt.get())) {
+            throw new ValidationException("Only shipped orders can be delivered.");
         }
-
         return updateOrderStatus(orderId, OrderStatus.DELIVERED);
     }
 
     /**
      * Returns all orders.
      *
-     * @return list of defensive copies of all orders
+     * @return An unmodifiable list of all orders.
      */
     public List<Order> getAllOrders() {
-        return orderList.stream()
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+        return Collections.unmodifiableList(new ArrayList<>(orderList));
     }
 
     /**
      * Returns orders placed within a specific date range.
      *
-     * @param startDate the start date (inclusive, must not be null)
-     * @param endDate the end date (inclusive, must not be null)
-     * @return list of defensive copies of orders within the date range
-     * @throws IllegalArgumentException if startDate or endDate is null, or startDate is after endDate
+     * @param startDate The start date (inclusive).
+     * @param endDate   The end date (inclusive).
+     * @return An unmodifiable list of orders within the date range.
+     * @throws ValidationException If startDate or endDate is null, or startDate is after endDate.
      */
     public List<Order> getOrdersByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        Objects.requireNonNull(startDate, "Start date cannot be null");
-        Objects.requireNonNull(endDate, "End date cannot be null");
+        Objects.requireNonNull(startDate, "Start date cannot be null.");
+        Objects.requireNonNull(endDate, "End date cannot be null.");
 
         if (startDate.isAfter(endDate)) {
-            throw new IllegalArgumentException("Start date cannot be after end date");
+            throw new ValidationException("Start date cannot be after end date.");
         }
 
         return orderList.stream()
                 .filter(order -> !order.getOrderDate().isBefore(startDate) &&
                         !order.getOrderDate().isAfter(endDate))
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**
      * Returns orders with total amount within a specific range.
      *
-     * @param minAmount the minimum amount (inclusive, must be >= 0)
-     * @param maxAmount the maximum amount (inclusive, must be >= minAmount)
-     * @return list of defensive copies of orders within the amount range
-     * @throws IllegalArgumentException if amounts are invalid
+     * @param minAmount The minimum amount (inclusive).
+     * @param maxAmount The maximum amount (inclusive).
+     * @return An unmodifiable list of orders within the amount range.
+     * @throws ValidationException If amounts are invalid.
      */
     public List<Order> getOrdersByAmountRange(double minAmount, double maxAmount) {
         if (minAmount < 0) {
-            throw new IllegalArgumentException("Minimum amount cannot be negative");
+            throw new ValidationException("Minimum amount cannot be negative.");
         }
         if (maxAmount < minAmount) {
-            throw new IllegalArgumentException("Maximum amount cannot be less than minimum amount");
+            throw new ValidationException("Maximum amount cannot be less than minimum amount.");
         }
 
         return orderList.stream()
                 .filter(order -> order.getTotalAmount() >= minAmount &&
                         order.getTotalAmount() <= maxAmount)
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**
      * Returns orders that are overdue (past expected delivery date and not delivered/cancelled).
      *
-     * @return list of defensive copies of overdue orders
+     * @return An unmodifiable list of overdue orders.
      */
     public List<Order> getOverdueOrders() {
         return orderList.stream()
-                .filter(Order::isOverdue)
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+                .filter(this::isOverdue)
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**
      * Returns orders that contain organic certified products.
      *
-     * @return list of defensive copies of organic certified orders
+     * @return An unmodifiable list of organic certified orders.
      */
     public List<Order> getOrganicCertifiedOrders() {
         return orderList.stream()
                 .filter(Order::isOrganicCertified)
-                .map(this::copyOrder)
-                .collect(Collectors.toList());
+                .collect(Collectors.toUnmodifiableList());
     }
 
     /**
      * Returns the count of orders by status.
      *
-     * @return map containing the count of orders for each status
+     * @return A map containing the count of orders for each status.
      */
     public Map<OrderStatus, Long> getOrderCountByStatus() {
         return orderList.stream()
@@ -377,11 +408,11 @@ public class OrderService {
     /**
      * Calculates the total revenue from all delivered orders.
      *
-     * @return total revenue from delivered orders
+     * @return Total revenue from delivered orders.
      */
     public double getTotalRevenue() {
         return orderList.stream()
-                .filter(Order::isDelivered)
+                .filter(this::isDelivered)
                 .mapToDouble(Order::getTotalAmount)
                 .sum();
     }
@@ -389,15 +420,14 @@ public class OrderService {
     /**
      * Calculates the total revenue for a specific seller from delivered orders.
      *
-     * @param sellerId the seller ID (must not be null)
-     * @return total revenue for the seller
-     * @throws IllegalArgumentException if sellerId is null
+     * @param sellerId The seller ID.
+     * @return Total revenue for the seller.
+     * @throws ValidationException If sellerId is null or empty.
      */
     public double getTotalRevenueForSeller(String sellerId) {
-        Objects.requireNonNull(sellerId, "Seller ID cannot be null");
-
+        validateSellerId(sellerId);
         return orderList.stream()
-                .filter(order -> order.getSellerId().equals(sellerId) && order.isDelivered())
+                .filter(order -> order.getSellerId().equals(sellerId) && isDelivered(order))
                 .mapToDouble(Order::getTotalAmount)
                 .sum();
     }
@@ -405,7 +435,7 @@ public class OrderService {
     /**
      * Returns the average order value.
      *
-     * @return average order value, or 0 if no orders
+     * @return Average order value, or 0 if no orders.
      */
     public double getAverageOrderValue() {
         return orderList.stream()
@@ -414,27 +444,157 @@ public class OrderService {
                 .orElse(0.0);
     }
 
-    // ----------------- private helpers -----------------
+    /**
+     * Checks if the order is pending.
+     *
+     * @param order The order to check.
+     * @return True if status is PENDING.
+     */
+    public boolean isPending(Order order) {
+        return order.getStatus() == OrderStatus.PENDING;
+    }
 
     /**
-     * Creates a defensive copy of an order using the clone method.
+     * Checks if the order is confirmed.
      *
-     * @param order the order to copy (must not be null)
-     * @return a cloned copy of the order
+     * @param order The order to check.
+     * @return True if status is CONFIRMED.
      */
-    private Order copyOrder(Order order) {
-        Objects.requireNonNull(order, "Order cannot be null");
-        return order.clone();
+    public boolean isConfirmed(Order order) {
+        return order.getStatus() == OrderStatus.CONFIRMED;
+    }
+
+    /**
+     * Checks if the order is in processing.
+     *
+     * @param order The order to check.
+     * @return True if status is PROCESSING.
+     */
+    public boolean isProcessing(Order order) {
+        return order.getStatus() == OrderStatus.PROCESSING;
+    }
+
+    /**
+     * Checks if the order is shipped.
+     *
+     * @param order The order to check.
+     * @return True if status is SHIPPED.
+     */
+    public boolean isShipped(Order order) {
+        return order.getStatus() == OrderStatus.SHIPPED;
+    }
+
+    /**
+     * Checks if the order is delivered.
+     *
+     * @param order The order to check.
+     * @return True if status is DELIVERED.
+     */
+    public boolean isDelivered(Order order) {
+        return order.getStatus() == OrderStatus.DELIVERED;
+    }
+
+    /**
+     * Checks if the order is cancelled.
+     *
+     * @param order The order to check.
+     * @return True if status is CANCELLED.
+     */
+    public boolean isCancelled(Order order) {
+        return order.getStatus() == OrderStatus.CANCELLED;
+    }
+
+    /**
+     * Checks if the order is overdue (past expected delivery date).
+     *
+     * @param order The order to check.
+     * @return True if overdue, false otherwise.
+     */
+    public boolean isOverdue(Order order) {
+        return order.getExpectedDeliveryDate() != null &&
+                !isDelivered(order) &&
+                !isCancelled(order) &&
+                LocalDateTime.now().isAfter(order.getExpectedDeliveryDate());
+    }
+
+    /**
+     * Calculates the total amount based on order items.
+     *
+     * @param orderItems The list of order items.
+     * @return The calculated total amount.
+     */
+    private double calculateTotalAmount(List<OrderItem> orderItems) {
+        return orderItems.stream()
+                .mapToDouble(OrderItem::getTotalPrice)
+                .sum();
+    }
+
+    /**
+     * Validates data required for order creation.
+     *
+     * @param buyerId    Buyer identifier.
+     * @param sellerId   Seller identifier.
+     * @param orderItems List of ordered items.
+     * @throws ValidationException If any validation fails.
+     */
+    private void validateOrderCreationData(String buyerId, String sellerId, List<OrderItem> orderItems) {
+        validateBuyerId(buyerId);
+        validateSellerId(sellerId);
+        if (orderItems == null || orderItems.isEmpty()) {
+            throw new ValidationException("Order must contain at least one item.");
+        }
+        for (OrderItem item : orderItems) {
+            if (item == null || item.getProductId() == null || item.getProductId().trim().isEmpty() ||
+                    item.getQuantity() <= 0 || item.getUnitPrice() < 0) {
+                throw new ValidationException("Invalid order item details.");
+            }
+        }
+    }
+
+    /**
+     * Validates that the order ID is not null or empty.
+     *
+     * @param id The identifier to validate.
+     * @throws ValidationException If the ID is null or empty.
+     */
+    private void validateId(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new ValidationException("Order ID cannot be null or empty.");
+        }
+    }
+
+    /**
+     * Validates that the buyer ID is not null or empty.
+     *
+     * @param buyerId The buyer ID to validate.
+     * @throws ValidationException If the buyer ID is null or empty.
+     */
+    private void validateBuyerId(String buyerId) {
+        if (buyerId == null || buyerId.trim().isEmpty()) {
+            throw new ValidationException("Buyer ID cannot be null or empty.");
+        }
+    }
+
+    /**
+     * Validates that the seller ID is not null or empty.
+     *
+     * @param sellerId The seller ID to validate.
+     * @throws ValidationException If the seller ID is null or empty.
+     */
+    private void validateSellerId(String sellerId) {
+        if (sellerId == null || sellerId.trim().isEmpty()) {
+            throw new ValidationException("Seller ID cannot be null or empty.");
+        }
     }
 
     /**
      * Adds an order to all relevant indexes.
      *
-     * @param order the order to add to indexes
+     * @param order The order to add to indexes.
      */
     private void addOrderToIndexes(Order order) {
         orderList.add(order);
-        ordersByStatus.get(order.getStatus()).add(order);
+        ordersByStatus.computeIfAbsent(order.getStatus(), k -> new ArrayList<>()).add(order);
         ordersByBuyer.computeIfAbsent(order.getBuyerId(), k -> new ArrayList<>()).add(order);
         ordersBySeller.computeIfAbsent(order.getSellerId(), k -> new ArrayList<>()).add(order);
     }
@@ -442,7 +602,7 @@ public class OrderService {
     /**
      * Removes an order from all relevant indexes.
      *
-     * @param order the order to remove from indexes
+     * @param order The order to remove from indexes.
      */
     private void removeOrderFromIndexes(Order order) {
         ordersByStatus.get(order.getStatus()).remove(order);
@@ -453,15 +613,13 @@ public class OrderService {
     /**
      * Finds the index of an order in the main list by ID.
      *
-     * @param orderId the order ID to search for
-     * @return Optional containing the index or empty if not found
+     * @param orderId The order ID to search for.
+     * @return An Optional containing the index or empty if not found.
      */
     private Optional<Integer> findOrderIndex(String orderId) {
-        for (int i = 0; i < orderList.size(); i++) {
-            if (orderList.get(i).getId().equals(orderId)) {
-                return Optional.of(i);
-            }
-        }
-        return Optional.empty();
+        return IntStream.range(0, orderList.size())
+                .filter(i -> orderList.get(i).getId().equals(orderId))
+                .boxed()
+                .findFirst();
     }
 }

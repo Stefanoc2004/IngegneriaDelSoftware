@@ -2,9 +2,11 @@ package it.unicam.cs.ids.filieraagricola.service;
 
 import it.unicam.cs.ids.filieraagricola.model.Content;
 import it.unicam.cs.ids.filieraagricola.model.ContentState;
-import it.unicam.cs.ids.filieraagricola.service.exception.ContentNotFoundException;
+import it.unicam.cs.ids.filieraagricola.service.exception.NotFoundException;
+import it.unicam.cs.ids.filieraagricola.service.exception.ValidationException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -13,10 +15,10 @@ import java.util.stream.IntStream;
 /**
  * Service class for managing content items in the agricultural platform.
  *
- * <p>This service uses defensive copying: whenever a {@link Content} is stored
- * or returned, a clone of the object is used so that internal state is never
- * exposed to callers. The implementation expects {@link Content#clone()} to
- * return a deep copy (Prototype pattern).</p>
+ * <p>This service handles the creation, retrieval, and approval workflow of content items.
+ * It ensures data integrity through validation and manages state transitions.
+ * Content objects are treated as immutable data transfer objects once created,
+ * with updates resulting in new instances or modifications handled internally by the service.</p>
  */
 public class ContentService {
 
@@ -30,66 +32,48 @@ public class ContentService {
     }
 
     /**
-     * Stores a content item in the service.
+     * Creates and stores a new content item.
      *
-     * <p>The stored instance is a defensive copy (clone) of the provided object.</p>
-     *
-     * @param content the content to store (must not be null)
-     * @return {@code true} if the content was added successfully
-     * @throws NullPointerException if {@code content} is null
+     * @param name The title/name of the content.
+     * @param description The detailed description of the content.
+     * @return The newly created Content instance.
+     * @throws ValidationException If the name or description is null or empty.
      */
-    public boolean createContent(Content content) {
-        Objects.requireNonNull(content, "Content cannot be null");
-        return this.contentList.add(copyContent(content));
-    }
-
-    /**
-     * Approves a content item identified by a numeric identifier.
-     *
-     * <p>Compatibility helper that converts the numeric id to string and delegates
-     * to {@link #approveContentById(String)}.</p>
-     *
-     * @param numericId the numeric id of the content to approve
-     * @return {@code true} if the content was newly approved, {@code false} if it was already approved
-     * @throws ContentNotFoundException if no content with the given id exists
-     */
-    public boolean approveContent(int numericId) throws ContentNotFoundException {
-        return approveContentById(String.valueOf(numericId));
+    public Content createContent(String name, String description) {
+        validateContentData(name, description);
+        Content newContent = new Content(name.trim(), description.trim(), ContentState.PENDING);
+        this.contentList.add(newContent);
+        return newContent;
     }
 
     /**
      * Approves a content item identified by its string identifier.
      *
      * <p>If the content is found and not already in {@link ContentState#APPROVED},
-     * the stored instance is replaced by a defensively-copied APPROVED instance.</p>
+     * its state is updated to APPROVED.</p>
      *
-     * @param id the string identifier of the content to approve (must not be null)
-     * @return {@code true} if the content transitioned to APPROVED; {@code false} if it was already approved
-     * @throws NullPointerException      if {@code id} is null
-     * @throws ContentNotFoundException  if no content with the given id exists
+     * @param id The string identifier of the content to approve.
+     * @return True if the content transitioned to APPROVED; false if it was already approved.
+     * @throws ValidationException If {@code id} is null or empty.
+     * @throws NotFoundException If no content with the given id exists.
      */
-    public boolean approveContentById(String id) throws ContentNotFoundException {
-        Objects.requireNonNull(id, "Content id cannot be null");
+    public boolean approveContentById(String id) {
+        validateId(id);
 
-        Optional<Integer> indexOpt = IntStream.range(0, contentList.size())
-                .filter(i -> {
-                    Content c = contentList.get(i);
-                    return c.getId() != null && c.getId().equals(id);
-                })
-                .boxed()
-                .findFirst();
+        Optional<Integer> indexOpt = findContentIndex(id);
 
         if (indexOpt.isEmpty()) {
-            throw new ContentNotFoundException();
+            throw new NotFoundException("Content with ID " + id + " not found.");
         }
 
         int index = indexOpt.get();
         Content content = contentList.get(index);
 
-        if (content.isApproved()) {
-            return false;
+        if (content.getState() == ContentState.APPROVED) {
+            return false; // Already approved
         }
 
+        // Create a new Content instance with the APPROVED state
         Content approvedContent = new Content(
                 content.getId(),
                 content.getName(),
@@ -97,56 +81,80 @@ public class ContentService {
                 ContentState.APPROVED
         );
 
-        contentList.set(index, copyContent(approvedContent));
+        contentList.set(index, approvedContent);
+        return true;
+    }
+
+    /**
+     * Rejects a content item identified by its string identifier.
+     *
+     * <p>If the content is found and not already in {@link ContentState#REJECTED},
+     * its state is updated to REJECTED.</p>
+     *
+     * @param id The string identifier of the content to reject.
+     * @return True if the content transitioned to REJECTED; false if it was already rejected.
+     * @throws ValidationException If {@code id} is null or empty.
+     * @throws NotFoundException If no content with the given id exists.
+     */
+    public boolean rejectContentById(String id) {
+        validateId(id);
+
+        Optional<Integer> indexOpt = findContentIndex(id);
+
+        if (indexOpt.isEmpty()) {
+            throw new NotFoundException("Content with ID " + id + " not found.");
+        }
+
+        int index = indexOpt.get();
+        Content content = contentList.get(index);
+
+        if (content.getState() == ContentState.REJECTED) {
+            return false; // Already rejected
+        }
+
+        // Create a new Content instance with the REJECTED state
+        Content rejectedContent = new Content(
+                content.getId(),
+                content.getName(),
+                content.getDescription(),
+                ContentState.REJECTED
+        );
+
+        contentList.set(index, rejectedContent);
         return true;
     }
 
     /**
      * Returns all approved contents suitable for social media.
      *
-     * <p>Each returned element is a clone (defensive copy) and the returned list
-     * is produced with {@code Stream.toList()} (modern, effectively unmodifiable).</p>
-     *
-     * @return list of approved content clones (empty list if none)
+     * @return An unmodifiable list of approved content items (empty list if none).
      */
     public List<Content> showSocialContent() {
         return contentList.stream()
-                .filter(Content::isApproved)
-                .map(this::copyContent)
-                .toList();
-    }
-
-    /**
-     * Legacy method that returns approved content or {@code null} if none exist.
-     *
-     * @return list of approved content clones, or {@code null} if none exist
-     */
-    public List<Content> showSocialContentLegacy() {
-        List<Content> approvedContent = showSocialContent();
-        return approvedContent.isEmpty() ? null : approvedContent;
+                .filter(content -> content.getState() == ContentState.APPROVED)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll); // Collect to a new mutable list
     }
 
     /**
      * Finds a content by its string identifier.
      *
-     * @param id the content id to search for (must not be null)
-     * @return Optional containing a defensive copy of the found content or empty if not found
-     * @throws NullPointerException if {@code id} is null
+     * @param id The content id to search for.
+     * @return An Optional containing the found content or empty if not found.
+     * @throws ValidationException If {@code id} is null or empty.
      */
     public Optional<Content> findContentById(String id) {
-        Objects.requireNonNull(id, "Content id cannot be null");
+        validateId(id);
         return contentList.stream()
-                .filter(content -> content.getId() != null && content.getId().equals(id))
-                .findFirst()
-                .map(this::copyContent);
+                .filter(content -> content.getId().equals(id))
+                .findFirst();
     }
 
     /**
      * Counts how many contents are in a given {@link ContentState}.
      *
-     * @param state the state to count (must not be null)
-     * @return the number of contents in the specified state
-     * @throws NullPointerException if {@code state} is null
+     * @param state The state to count.
+     * @return The number of contents in the specified state.
+     * @throws ValidationException If {@code state} is null.
      */
     public long countContentsByState(ContentState state) {
         Objects.requireNonNull(state, "ContentState cannot be null");
@@ -156,65 +164,74 @@ public class ContentService {
     }
 
     /**
-     * Returns all pending content items as defensive copies.
+     * Returns all pending content items.
      *
-     * @return list of pending content clones (empty if none)
+     * @return An unmodifiable list of pending content items (empty if none).
      */
     public List<Content> getPendingContent() {
         return contentList.stream()
-                .filter(Content::isPending)
-                .map(this::copyContent)
-                .toList();
+                .filter(content -> content.getState() == ContentState.PENDING)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     /**
-     * Returns all rejected content items as defensive copies.
+     * Returns all rejected content items.
      *
-     * @return list of rejected content clones (empty if none)
+     * @return An unmodifiable list of rejected content items (empty if none).
      */
     public List<Content> getRejectedContent() {
         return contentList.stream()
-                .filter(Content::isRejected)
-                .map(this::copyContent)
-                .toList();
+                .filter(content -> content.getState() == ContentState.REJECTED)
+                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
     }
 
     /**
-     * Returns a defensive copy of the entire internal content list.
+     * Returns an unmodifiable list of all internal content items.
      *
-     * @return list containing clones of all managed contents
+     * @return An unmodifiable list containing all managed contents.
      */
-    public List<Content> getContentList() {
-        return contentList.stream()
-                .map(this::copyContent)
-                .toList();
+    public List<Content> getAllContents() {
+        return Collections.unmodifiableList(new ArrayList<>(contentList));
     }
 
     /**
-     * Replaces the internal content storage with a defensive copy of the provided list.
+     * Validates the name and description of a content item.
      *
-     * @param newContentList new content list (must not be null)
-     * @throws IllegalArgumentException if {@code newContentList} is null
+     * @param name The name of the content.
+     * @param description The description of the content.
+     * @throws ValidationException If the name or description is null or empty.
      */
-    public void setContentList(List<Content> newContentList) {
-        if (newContentList == null) throw new IllegalArgumentException("Content list cannot be null");
-        this.contentList.clear();
-        List<Content> copies = newContentList.stream()
-                .map(this::copyContent)
-                .toList();
-        this.contentList.addAll(copies);
+    private void validateContentData(String name, String description) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new ValidationException("Content name cannot be null or empty.");
+        }
+        if (description == null || description.trim().isEmpty()) {
+            throw new ValidationException("Content description cannot be null or empty.");
+        }
     }
 
-    /* ----------------- private helpers ----------------- */
+    /**
+     * Validates that the content ID is not null or empty.
+     *
+     * @param id The identifier to validate.
+     * @throws ValidationException If the ID is null or empty.
+     */
+    private void validateId(String id) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new ValidationException("Content ID cannot be null or empty.");
+        }
+    }
 
     /**
-     * Returns a defensive copy of the provided content by invoking {@code clone()}.
+     * Finds the index of a content item in the internal list by its ID.
      *
-     * @param content content to copy (may not be null)
-     * @return clone of content
+     * @param id The ID of the content to find.
+     * @return An Optional containing the index of the content, or empty if not found.
      */
-    private Content copyContent(Content content) {
-        Objects.requireNonNull(content, "Content cannot be null");
-        return content.clone();
+    private Optional<Integer> findContentIndex(String id) {
+        return IntStream.range(0, contentList.size())
+                .filter(i -> contentList.get(i).getId().equals(id))
+                .boxed()
+                .findFirst();
     }
 }
