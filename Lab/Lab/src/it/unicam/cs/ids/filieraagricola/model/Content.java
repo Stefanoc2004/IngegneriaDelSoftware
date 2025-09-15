@@ -1,282 +1,112 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 import java.util.Objects;
-import java.util.UUID; // Added import for UUID
+import java.util.UUID;
 
 /**
  * Represents a content item within the agricultural platform.
- * Each content can be related to products, supply chains, or events,
- * and must be validated/approved before publication.
+ * Each content can be related to products, supply chains, or events.
+ * It holds data about the content's unique identifier, name, description, and current approval state.
  *
- * <p>Content items go through an approval workflow where they start in
- * PENDING state and can be moved to APPROVED or REJECTED states by
- * authorized users (curators).</p>
- *
- * <p>This class implements the Prototype pattern, allowing for easy
- * creation of new content instances by cloning existing ones.</p>
+ * <p>This class is a pure data model and does not contain business logic for validation or state transitions.
+ * Business logic, such as content approval workflow, is handled by {@link it.unicam.cs.ids.filieraagricola.service.ContentService}.</p>
  */
-public class Content implements Prototype<Content> {
+public class Content {
 
     /**
-     * Unique identifier for the content. Automatically generated if not provided.
+     * Unique identifier for the content.
      */
-    private String id;
+    private final String id;
 
     /**
-     * Title/name of the content
+     * Title/name of the content.
      */
-    private String name;
+    private final String name;
 
     /**
-     * Detailed description of the content
+     * Detailed description of the content.
      */
-    private String description;
+    private final String description;
 
     /**
-     * Current approval state of the content
+     * Current approval state of the content.
      */
-    private ContentState state;
+    private final ContentState state;
 
     /**
-     * Default constructor for prototype pattern.
-     * Creates a new Content instance with a generated ID and PENDING state.
-     * All other fields are initialized to null and should be set
-     * using the appropriate setter methods.
-     */
-    public Content() {
-        this.id = UUID.randomUUID().toString(); // Automatically generate ID
-        this.state = ContentState.PENDING;
-    }
-
-    /**
-     * Constructor with all parameters.
-     * Creates a fully initialized Content instance with validation
-     * and normalization of input parameters. If the ID is null or empty, a new one is generated.
+     * Constructs a new Content instance with a generated ID and PENDING state.
+     * This constructor is primarily for internal use by services when creating new content.
      *
-     * @param id unique identifier for the content, if null or empty, a new UUID will be generated
-     * @param name title of the content, must not be null or empty
-     * @param description detailed description, must not be null or empty
-     * @param state current approval state, must not be null
-     * @throws IllegalArgumentException if any validation fails
+     * @param name The title/name of the content.
+     * @param description The detailed description of the content.
+     * @param state The initial approval state of the content.
      */
-    public Content(String id, String name, String description, ContentState state) {
-        this.id = (id == null || id.trim().isEmpty()) ? UUID.randomUUID().toString() : id.trim(); // Ensure ID is always set and trimmed
+    public Content(String name, String description, ContentState state) {
+        this.id = UUID.randomUUID().toString();
         this.name = name;
         this.description = description;
         this.state = state;
-        validate();
-        normalize();
     }
 
     /**
-     * Copy constructor for cloning.
-     * Creates a new Content instance with the same properties as the
-     * provided content object.
+     * Constructs a new Content instance with a specified ID.
+     * This constructor is typically used when reconstructing a Content object from persistence
+     * or when a specific ID is required.
      *
-     * @param other the Content instance to copy
-     * @throws IllegalArgumentException if other is null
+     * @param id The unique identifier for the content.
+     * @param name The title/name of the content.
+     * @param description The detailed description of the content.
+     * @param state The current approval state of the content.
      */
-    public Content(Content other) {
-        if (other == null) {
-            throw new IllegalArgumentException("Content to copy cannot be null");
-        }
-        this.id = other.id;
-        this.name = other.name;
-        this.description = other.description;
-        this.state = other.state;
-    }
-
-    /**
-     * Creates a deep copy of this Content instance.
-     * This method is part of the Prototype pattern implementation.
-     *
-     * @return a new Content instance with the same properties as this one
-     */
-    @Override
-    public Content clone() {
-        return new Content(this);
-    }
-
-    /**
-     * Checks if content is approved for publication.
-     *
-     * @return true if the content state is APPROVED, false otherwise
-     */
-    public boolean isApproved() {
-        return state == ContentState.APPROVED;
-    }
-
-    /**
-     * Checks if content is pending approval.
-     *
-     * @return true if the content state is PENDING, false otherwise
-     */
-    public boolean isPending() {
-        return state == ContentState.PENDING;
-    }
-
-    /**
-     * Checks if content has been rejected.
-     *
-     * @return true if the content state is REJECTED, false otherwise
-     */
-    public boolean isRejected() {
-        return state == ContentState.REJECTED;
-    }
-
-    /**
-     * Validates all content fields according to business rules.
-     * Called internally during construction and field updates.
-     *
-     * @throws IllegalArgumentException if any validation fails
-     */
-    private void validate() {
-        // ID is now always generated or provided, so it should not be null or empty here.
-        // If it was possible for ID to be null/empty after construction, validateId(id) would be needed.
-        // For now, we assume it's valid due to constructor logic.
-        if (name != null) validateName(name);
-        if (description != null) validateDescription(description);
-        Objects.requireNonNull(state, "Content state cannot be null");
-    }
-
-    /**
-     * Normalizes string fields by trimming whitespace.
-     * Called internally during construction and field updates.
-     */
-    private void normalize() {
-        if (name != null) {
-            name = name.trim();
-        }
-        if (description != null) {
-            description = description.trim();
-        }
-    }
-
-    /**
-     * Validates that the content ID is not empty.
-     *
-     * @param id the identifier to validate
-     * @throws IllegalArgumentException if the ID is empty
-     */
-    private static void validateId(String id) {
-        if (id == null || id.trim().isEmpty()) { // Added null check for robustness
-            throw new IllegalArgumentException("Content ID cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates that the content name is not empty.
-     *
-     * @param name the name to validate
-     * @throws IllegalArgumentException if the name is empty
-     */
-    private static void validateName(String name) {
-        if (name == null || name.trim().isEmpty()) { // Added null check for robustness
-            throw new IllegalArgumentException("Content name cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates that the content description is not empty.
-     *
-     * @param description the description to validate
-     * @throws IllegalArgumentException if the description is empty
-     */
-    private static void validateDescription(String description) {
-        if (description == null || description.trim().isEmpty()) { // Added null check for robustness
-            throw new IllegalArgumentException("Content description cannot be null or empty");
-        }
+    public Content(String id, String name, String description, ContentState state) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.state = state;
     }
 
     /**
      * Returns the unique identifier of this content.
      *
-     * @return the content ID, never null after construction
+     * @return The content ID, never null after construction.
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Sets the unique identifier for this content.
-     * The ID is validated to ensure it's not null or empty if provided.
-     *
-     * @param id the content identifier to set
-     * @throws IllegalArgumentException if id is null or empty after trimming
-     */
-    public void setId(String id) {
-        validateId(id); // Validate even if null is passed, to throw exception
-        this.id = id.trim();
-    }
-
-    /**
      * Returns the name/title of this content.
      *
-     * @return the content name, may be null if not set
+     * @return The content name.
      */
     public String getName() {
         return name;
     }
 
     /**
-     * Sets the name/title for this content.
-     * The name is validated and normalized (trimmed) if provided.
-     *
-     * @param name the content name to set
-     * @throws IllegalArgumentException if name is null or empty after trimming
-     */
-    public void setName(String name) {
-        validateName(name); // Validate even if null is passed, to throw exception
-        this.name = name.trim();
-    }
-
-    /**
      * Returns the detailed description of this content.
      *
-     * @return the content description, may be null if not set
+     * @return The content description.
      */
     public String getDescription() {
         return description;
     }
 
     /**
-     * Sets the detailed description for this content.
-     * The description is validated and normalized (trimmed) if provided.
-     *
-     * @param description the content description to set
-     * @throws IllegalArgumentException if description is null or empty after trimming
-     */
-    public void setDescription(String description) {
-        validateDescription(description); // Validate even if null is passed, to throw exception
-        this.description = description.trim();
-    }
-
-    /**
      * Returns the current approval state of this content.
      *
-     * @return the content state, never null
+     * @return The content state, never null.
      */
     public ContentState getState() {
         return state;
     }
 
     /**
-     * Sets the approval state for this content.
-     *
-     * @param state the new content state
-     * @throws IllegalArgumentException if state is null
-     */
-    public void setState(ContentState state) {
-        Objects.requireNonNull(state, "Content state cannot be null");
-        this.state = state;
-    }
-
-    /**
      * Indicates whether some other object is "equal to" this Content.
      * Two Content objects are considered equal if they have the same ID.
      *
-     * @param o the reference object with which to compare
-     * @return true if this object is equal to the o argument; false otherwise
+     * @param o The reference object with which to compare.
+     * @return True if this object is equal to the o argument; false otherwise.
      */
     @Override
     public boolean equals(Object o) {
@@ -290,8 +120,9 @@ public class Content implements Prototype<Content> {
      * Returns a hash code value for this Content.
      * The hash code is based on the content ID.
      *
-     * @return a hash code value for this object
+     * @return A hash code value for this object.
      */
+    @Override
     public int hashCode() {
         return Objects.hash(id);
     }
@@ -300,7 +131,7 @@ public class Content implements Prototype<Content> {
      * Returns a string representation of this Content.
      * The string includes all major fields for debugging purposes.
      *
-     * @return a string representation of this object
+     * @return A string representation of this object.
      */
     @Override
     public String toString() {

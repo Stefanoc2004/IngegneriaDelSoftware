@@ -2,6 +2,7 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -11,650 +12,296 @@ import java.util.UUID;
  *
  * <p>An Order contains information about a purchase transaction, including
  * the buyer, ordered items (products or packages), quantities, prices,
- * delivery information, and order status. Orders track the complete
- * lifecycle from creation to delivery completion.</p>
- *
- * <p>This class implements the Prototype pattern to enable defensive copying
- * and safe object management throughout the system.</p>
+ * delivery information, and order status.
+ * This class is a pure data model and does not contain business logic for validation,
+ * state transitions, or complex calculations.
+ * Business logic, such as order creation, status updates, and total amount calculation,
+ * is handled by {@link it.unicam.cs.ids.filieraagricola.service.OrderService}.</p>
  */
-public class Order implements Prototype<Order> {
+public class Order {
 
     /**
-     * Unique identifier for the order. Automatically generated if not provided.
+     * Unique identifier for the order.
      */
-    private String id;
+    private final String id;
 
     /**
-     * ID of the buyer who placed the order
+     * ID of the buyer who placed the order.
      */
-    private String buyerId;
+    private final String buyerId;
 
     /**
-     * ID of the seller (producer, transformer, or distributor)
+     * ID of the seller (producer, transformer, or distributor).
      */
-    private String sellerId;
+    private final String sellerId;
 
     /**
-     * List of ordered items with quantities and prices
+     * List of ordered items with quantities and prices.
      */
-    private List<OrderItem> orderItems;
+    private final List<OrderItem> orderItems;
 
     /**
-     * Total amount of the order
+     * Total amount of the order.
      */
-    private double totalAmount;
+    private final double totalAmount;
 
     /**
-     * Current status of the order
+     * Current status of the order.
      */
-    private OrderStatus status;
+    private final OrderStatus status;
 
     /**
-     * Date and time when the order was created
+     * Date and time when the order was created.
      */
-    private LocalDateTime orderDate;
+    private final LocalDateTime orderDate;
 
     /**
-     * Expected delivery date
+     * Expected delivery date.
      */
-    private LocalDateTime expectedDeliveryDate;
+    private final LocalDateTime expectedDeliveryDate;
 
     /**
-     * Actual delivery date (null until delivered)
+     * Actual delivery date (null until delivered).
      */
-    private LocalDateTime actualDeliveryDate;
+    private final LocalDateTime actualDeliveryDate;
 
     /**
-     * Delivery address for the order
+     * Delivery address for the order.
      */
-    private String deliveryAddress;
+    private final String deliveryAddress;
 
     /**
-     * Payment method used for the order
+     * Payment method used for the order.
      */
-    private String paymentMethod;
+    private final String paymentMethod;
 
     /**
-     * Additional notes or special instructions
+     * Additional notes or special instructions.
      */
-    private String notes;
+    private final String notes;
 
     /**
-     * Whether the order qualifies for organic certification
+     * Whether the order qualifies for organic certification.
      */
-    private boolean organicCertified;
+    private final boolean organicCertified;
 
     /**
-     * Delivery method (e.g., "home_delivery", "pickup", "courier")
+     * Delivery method (e.g., "home_delivery", "pickup", "courier").
      */
-    private String deliveryMethod;
+    private final String deliveryMethod;
 
     /**
-     * Default constructor for frameworks and prototype pattern.
-     * Generates a unique ID and sets default values.
-     */
-    public Order() {
-        this.id = UUID.randomUUID().toString();
-        this.orderItems = new ArrayList<>();
-        this.totalAmount = 0.0;
-        this.status = OrderStatus.PENDING;
-        this.orderDate = LocalDateTime.now();
-        this.organicCertified = false;
-    }
-
-    /**
-     * Full constructor with validation and normalization.
+     * Constructs a new Order instance with a generated ID.
+     * This constructor is primarily for internal use by services when creating new orders.
      *
-     * @param id unique identifier (if null or empty, a new UUID will be generated)
-     * @param buyerId buyer identifier (must not be null or empty)
-     * @param sellerId seller identifier (must not be null or empty)
-     * @param orderItems list of ordered items (may be null, will be initialized as empty)
-     * @param totalAmount total order amount (must be >= 0)
-     * @param status order status (must not be null)
-     * @param orderDate order creation date (must not be null)
-     * @param expectedDeliveryDate expected delivery date (may be null)
-     * @param deliveryAddress delivery address (may be null)
-     * @param paymentMethod payment method (may be null)
-     * @param deliveryMethod delivery method (may be null)
-     * @throws IllegalArgumentException if any validation fails
+     * @param buyerId            Buyer identifier.
+     * @param sellerId           Seller identifier.
+     * @param orderItems         List of ordered items.
+     * @param totalAmount        Total amount of the order.
+     * @param status             Order status.
+     * @param orderDate          Order creation date.
+     * @param expectedDeliveryDate Expected delivery date.
+     * @param actualDeliveryDate Actual delivery date.
+     * @param deliveryAddress    Delivery address.
+     * @param paymentMethod      Payment method.
+     * @param notes              Additional notes.
+     * @param organicCertified   Whether the order qualifies for organic certification.
+     * @param deliveryMethod     Delivery method.
      */
-    public Order(String id, String buyerId, String sellerId, List<OrderItem> orderItems,
+    public Order(String buyerId, String sellerId, List<OrderItem> orderItems,
                  double totalAmount, OrderStatus status, LocalDateTime orderDate,
-                 LocalDateTime expectedDeliveryDate, String deliveryAddress,
-                 String paymentMethod, String deliveryMethod) {
-        this.id = (id == null || id.trim().isEmpty()) ? UUID.randomUUID().toString() : id.trim();
-
-        validateBuyerId(buyerId);
-        validateSellerId(sellerId);
-        validateTotalAmount(totalAmount);
-        validateStatus(status);
-        validateOrderDate(orderDate);
-
-        this.buyerId = buyerId.trim();
-        this.sellerId = sellerId.trim();
-        this.orderItems = orderItems != null ? new ArrayList<>(orderItems) : new ArrayList<>();
+                 LocalDateTime expectedDeliveryDate, LocalDateTime actualDeliveryDate,
+                 String deliveryAddress, String paymentMethod, String notes,
+                 boolean organicCertified, String deliveryMethod) {
+        this.id = UUID.randomUUID().toString();
+        this.buyerId = buyerId;
+        this.sellerId = sellerId;
+        this.orderItems = Collections.unmodifiableList(new ArrayList<>(orderItems));
         this.totalAmount = totalAmount;
         this.status = status;
         this.orderDate = orderDate;
         this.expectedDeliveryDate = expectedDeliveryDate;
-        this.actualDeliveryDate = null;
-        this.deliveryAddress = deliveryAddress != null ? deliveryAddress.trim() : null;
-        this.paymentMethod = paymentMethod != null ? paymentMethod.trim() : null;
-        this.deliveryMethod = deliveryMethod != null ? deliveryMethod.trim() : null;
-        this.notes = null;
-        this.organicCertified = false;
+        this.actualDeliveryDate = actualDeliveryDate;
+        this.deliveryAddress = deliveryAddress;
+        this.paymentMethod = paymentMethod;
+        this.notes = notes;
+        this.organicCertified = organicCertified;
+        this.deliveryMethod = deliveryMethod;
     }
 
     /**
-     * Copy constructor for cloning.
+     * Constructs a new Order instance with a specified ID.
+     * This constructor is typically used when reconstructing an Order object from persistence
+     * or when a specific ID is required.
      *
-     * @param other the Order instance to copy
-     * @throws IllegalArgumentException if other is null
+     * @param id                 Unique identifier for the order.
+     * @param buyerId            Buyer identifier.
+     * @param sellerId           Seller identifier.
+     * @param orderItems         List of ordered items.
+     * @param totalAmount        Total amount of the order.
+     * @param status             Order status.
+     * @param orderDate          Order creation date.
+     * @param expectedDeliveryDate Expected delivery date.
+     * @param actualDeliveryDate Actual delivery date.
+     * @param deliveryAddress    Delivery address.
+     * @param paymentMethod      Payment method.
+     * @param notes              Additional notes.
+     * @param organicCertified   Whether the order qualifies for organic certification.
+     * @param deliveryMethod     Delivery method.
      */
-    public Order(Order other) {
-        Objects.requireNonNull(other, "Order to copy cannot be null");
-        this.id = other.id;
-        this.buyerId = other.buyerId;
-        this.sellerId = other.sellerId;
-        this.orderItems = new ArrayList<>(other.orderItems);
-        this.totalAmount = other.totalAmount;
-        this.status = other.status;
-        this.orderDate = other.orderDate;
-        this.expectedDeliveryDate = other.expectedDeliveryDate;
-        this.actualDeliveryDate = other.actualDeliveryDate;
-        this.deliveryAddress = other.deliveryAddress;
-        this.paymentMethod = other.paymentMethod;
-        this.notes = other.notes;
-        this.organicCertified = other.organicCertified;
-        this.deliveryMethod = other.deliveryMethod;
-    }
-
-    /**
-     * Creates a deep copy of this Order instance.
-     * This method implements the Prototype pattern.
-     *
-     * @return a new Order instance that is a copy of this instance
-     */
-    @Override
-    public Order clone() {
-        return new Order(this);
+    public Order(String id, String buyerId, String sellerId, List<OrderItem> orderItems,
+                 double totalAmount, OrderStatus status, LocalDateTime orderDate,
+                 LocalDateTime expectedDeliveryDate, LocalDateTime actualDeliveryDate,
+                 String deliveryAddress, String paymentMethod, String notes,
+                 boolean organicCertified, String deliveryMethod) {
+        this.id = id;
+        this.buyerId = buyerId;
+        this.sellerId = sellerId;
+        this.orderItems = Collections.unmodifiableList(new ArrayList<>(orderItems));
+        this.totalAmount = totalAmount;
+        this.status = status;
+        this.orderDate = orderDate;
+        this.expectedDeliveryDate = expectedDeliveryDate;
+        this.actualDeliveryDate = actualDeliveryDate;
+        this.deliveryAddress = deliveryAddress;
+        this.paymentMethod = paymentMethod;
+        this.notes = notes;
+        this.organicCertified = organicCertified;
+        this.deliveryMethod = deliveryMethod;
     }
 
     /**
      * Returns the unique identifier of this order.
      *
-     * @return the order ID, never null after construction
+     * @return The order ID, never null after construction.
      */
     public String getId() {
         return id;
     }
 
     /**
-     * Sets the unique identifier for this order.
-     *
-     * @param id the order identifier to set
-     * @throws IllegalArgumentException if id is null or empty after trimming
-     */
-    public void setId(String id) {
-        validateId(id);
-        this.id = id.trim();
-    }
-
-    /**
      * Returns the buyer ID.
      *
-     * @return the buyer ID
+     * @return The buyer ID.
      */
     public String getBuyerId() {
         return buyerId;
     }
 
     /**
-     * Sets the buyer ID.
-     *
-     * @param buyerId the buyer ID to set
-     * @throws IllegalArgumentException if buyerId is null or empty
-     */
-    public void setBuyerId(String buyerId) {
-        validateBuyerId(buyerId);
-        this.buyerId = buyerId.trim();
-    }
-
-    /**
      * Returns the seller ID.
      *
-     * @return the seller ID
+     * @return The seller ID.
      */
     public String getSellerId() {
         return sellerId;
     }
 
     /**
-     * Sets the seller ID.
-     *
-     * @param sellerId the seller ID to set
-     * @throws IllegalArgumentException if sellerId is null or empty
-     */
-    public void setSellerId(String sellerId) {
-        validateSellerId(sellerId);
-        this.sellerId = sellerId.trim();
-    }
-
-    /**
      * Returns the list of order items.
      *
-     * @return defensive copy of order items list
+     * @return An unmodifiable list of order items.
      */
     public List<OrderItem> getOrderItems() {
-        return new ArrayList<>(orderItems);
-    }
-
-    /**
-     * Sets the order items for this order.
-     *
-     * @param orderItems list of order items (may be null, will be treated as empty)
-     */
-    public void setOrderItems(List<OrderItem> orderItems) {
-        this.orderItems = orderItems != null ? new ArrayList<>(orderItems) : new ArrayList<>();
-        recalculateTotalAmount();
-    }
-
-    /**
-     * Adds an order item to this order.
-     *
-     * @param orderItem order item to add (must not be null)
-     * @throws IllegalArgumentException if orderItem is null
-     */
-    public void addOrderItem(OrderItem orderItem) {
-        if (orderItem == null) {
-            throw new IllegalArgumentException("Order item cannot be null");
-        }
-        orderItems.add(orderItem);
-        recalculateTotalAmount();
-    }
-
-    /**
-     * Removes an order item from this order.
-     *
-     * @param orderItem order item to remove
-     * @return true if the item was removed, false if it wasn't found
-     */
-    public boolean removeOrderItem(OrderItem orderItem) {
-        boolean removed = orderItems.remove(orderItem);
-        if (removed) {
-            recalculateTotalAmount();
-        }
-        return removed;
+        return orderItems;
     }
 
     /**
      * Returns the total amount of the order.
      *
-     * @return total amount
+     * @return Total amount.
      */
     public double getTotalAmount() {
         return totalAmount;
     }
 
     /**
-     * Sets the total amount of the order.
-     *
-     * @param totalAmount total amount (must be >= 0)
-     * @throws IllegalArgumentException if totalAmount is negative
-     */
-    public void setTotalAmount(double totalAmount) {
-        validateTotalAmount(totalAmount);
-        this.totalAmount = totalAmount;
-    }
-
-    /**
      * Returns the order status.
      *
-     * @return order status
+     * @return Order status.
      */
     public OrderStatus getStatus() {
         return status;
     }
 
     /**
-     * Sets the order status.
-     *
-     * @param status order status (must not be null)
-     * @throws IllegalArgumentException if status is null
-     */
-    public void setStatus(OrderStatus status) {
-        validateStatus(status);
-        this.status = status;
-
-        // Automatically set delivery date when status changes to DELIVERED
-        if (status == OrderStatus.DELIVERED && actualDeliveryDate == null) {
-            actualDeliveryDate = LocalDateTime.now();
-        }
-    }
-
-    /**
      * Returns the order creation date.
      *
-     * @return order date
+     * @return Order date.
      */
     public LocalDateTime getOrderDate() {
         return orderDate;
     }
 
     /**
-     * Sets the order creation date.
-     *
-     * @param orderDate order date (must not be null)
-     * @throws IllegalArgumentException if orderDate is null
-     */
-    public void setOrderDate(LocalDateTime orderDate) {
-        validateOrderDate(orderDate);
-        this.orderDate = orderDate;
-    }
-
-    /**
      * Returns the expected delivery date.
      *
-     * @return expected delivery date, may be null
+     * @return Expected delivery date, may be null.
      */
     public LocalDateTime getExpectedDeliveryDate() {
         return expectedDeliveryDate;
     }
 
     /**
-     * Sets the expected delivery date.
-     *
-     * @param expectedDeliveryDate expected delivery date (may be null)
-     */
-    public void setExpectedDeliveryDate(LocalDateTime expectedDeliveryDate) {
-        this.expectedDeliveryDate = expectedDeliveryDate;
-    }
-
-    /**
      * Returns the actual delivery date.
      *
-     * @return actual delivery date, null if not yet delivered
+     * @return Actual delivery date, null if not yet delivered.
      */
     public LocalDateTime getActualDeliveryDate() {
         return actualDeliveryDate;
     }
 
     /**
-     * Sets the actual delivery date.
-     *
-     * @param actualDeliveryDate actual delivery date (may be null)
-     */
-    public void setActualDeliveryDate(LocalDateTime actualDeliveryDate) {
-        this.actualDeliveryDate = actualDeliveryDate;
-    }
-
-    /**
      * Returns the delivery address.
      *
-     * @return delivery address, may be null
+     * @return Delivery address, may be null.
      */
     public String getDeliveryAddress() {
         return deliveryAddress;
     }
 
     /**
-     * Sets the delivery address.
-     *
-     * @param deliveryAddress delivery address (may be null)
-     */
-    public void setDeliveryAddress(String deliveryAddress) {
-        this.deliveryAddress = deliveryAddress != null ? deliveryAddress.trim() : null;
-    }
-
-    /**
      * Returns the payment method.
      *
-     * @return payment method, may be null
+     * @return Payment method, may be null.
      */
     public String getPaymentMethod() {
         return paymentMethod;
     }
 
     /**
-     * Sets the payment method.
-     *
-     * @param paymentMethod payment method (may be null)
-     */
-    public void setPaymentMethod(String paymentMethod) {
-        this.paymentMethod = paymentMethod != null ? paymentMethod.trim() : null;
-    }
-
-    /**
      * Returns the order notes.
      *
-     * @return order notes, may be null
+     * @return Order notes, may be null.
      */
     public String getNotes() {
         return notes;
     }
 
     /**
-     * Sets the order notes.
-     *
-     * @param notes order notes (may be null)
-     */
-    public void setNotes(String notes) {
-        this.notes = notes != null ? notes.trim() : null;
-    }
-
-    /**
      * Returns whether the order is organic certified.
      *
-     * @return true if organic certified
+     * @return True if organic certified.
      */
     public boolean isOrganicCertified() {
         return organicCertified;
     }
 
     /**
-     * Sets the organic certification status.
-     *
-     * @param organicCertified organic certification status
-     */
-    public void setOrganicCertified(boolean organicCertified) {
-        this.organicCertified = organicCertified;
-    }
-
-    /**
      * Returns the delivery method.
      *
-     * @return delivery method, may be null
+     * @return Delivery method, may be null.
      */
     public String getDeliveryMethod() {
         return deliveryMethod;
     }
 
     /**
-     * Sets the delivery method.
-     *
-     * @param deliveryMethod delivery method (may be null)
-     */
-    public void setDeliveryMethod(String deliveryMethod) {
-        this.deliveryMethod = deliveryMethod != null ? deliveryMethod.trim() : null;
-    }
-
-    /**
-     * Checks if the order is pending.
-     *
-     * @return true if status is PENDING
-     */
-    public boolean isPending() {
-        return status == OrderStatus.PENDING;
-    }
-
-    /**
-     * Checks if the order is confirmed.
-     *
-     * @return true if status is CONFIRMED
-     */
-    public boolean isConfirmed() {
-        return status == OrderStatus.CONFIRMED;
-    }
-
-    /**
-     * Checks if the order is in processing.
-     *
-     * @return true if status is PROCESSING
-     */
-    public boolean isProcessing() {
-        return status == OrderStatus.PROCESSING;
-    }
-
-    /**
-     * Checks if the order is shipped.
-     *
-     * @return true if status is SHIPPED
-     */
-    public boolean isShipped() {
-        return status == OrderStatus.SHIPPED;
-    }
-
-    /**
-     * Checks if the order is delivered.
-     *
-     * @return true if status is DELIVERED
-     */
-    public boolean isDelivered() {
-        return status == OrderStatus.DELIVERED;
-    }
-
-    /**
-     * Checks if the order is cancelled.
-     *
-     * @return true if status is CANCELLED
-     */
-    public boolean isCancelled() {
-        return status == OrderStatus.CANCELLED;
-    }
-
-    /**
-     * Returns the number of items in the order.
-     *
-     * @return number of order items
-     */
-    public int getItemCount() {
-        return orderItems.size();
-    }
-
-    /**
-     * Returns the total quantity of all items in the order.
-     *
-     * @return total quantity
-     */
-    public int getTotalQuantity() {
-        return orderItems.stream()
-                .mapToInt(OrderItem::getQuantity)
-                .sum();
-    }
-
-    /**
-     * Checks if the order is overdue (past expected delivery date).
-     *
-     * @return true if overdue, false otherwise
-     */
-    public boolean isOverdue() {
-        return expectedDeliveryDate != null &&
-                !isDelivered() &&
-                !isCancelled() &&
-                LocalDateTime.now().isAfter(expectedDeliveryDate);
-    }
-
-    /**
-     * Recalculates the total amount based on order items.
-     */
-    private void recalculateTotalAmount() {
-        this.totalAmount = orderItems.stream()
-                .mapToDouble(item -> item.getUnitPrice() * item.getQuantity())
-                .sum();
-    }
-
-    // ----------------- validation helpers -----------------
-
-    /**
-     * Validates that the order ID is not null or empty.
-     *
-     * @param id the identifier to validate
-     * @throws IllegalArgumentException if the ID is null or empty
-     */
-    private static void validateId(String id) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Order ID cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates that the buyer ID is not null or empty.
-     *
-     * @param buyerId the buyer ID to validate
-     * @throws IllegalArgumentException if the buyer ID is null or empty
-     */
-    private static void validateBuyerId(String buyerId) {
-        if (buyerId == null || buyerId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Buyer ID cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates that the seller ID is not null or empty.
-     *
-     * @param sellerId the seller ID to validate
-     * @throws IllegalArgumentException if the seller ID is null or empty
-     */
-    private static void validateSellerId(String sellerId) {
-        if (sellerId == null || sellerId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Seller ID cannot be null or empty");
-        }
-    }
-
-    /**
-     * Validates that the total amount is not negative.
-     *
-     * @param totalAmount the total amount to validate
-     * @throws IllegalArgumentException if the total amount is negative
-     */
-    private static void validateTotalAmount(double totalAmount) {
-        if (totalAmount < 0) {
-            throw new IllegalArgumentException("Total amount cannot be negative");
-        }
-    }
-
-    /**
-     * Validates that the order status is not null.
-     *
-     * @param status the status to validate
-     * @throws IllegalArgumentException if the status is null
-     */
-    private static void validateStatus(OrderStatus status) {
-        if (status == null) {
-            throw new IllegalArgumentException("Order status cannot be null");
-        }
-    }
-
-    /**
-     * Validates that the order date is not null.
-     *
-     * @param orderDate the order date to validate
-     * @throws IllegalArgumentException if the order date is null
-     */
-    private static void validateOrderDate(LocalDateTime orderDate) {
-        if (orderDate == null) {
-            throw new IllegalArgumentException("Order date cannot be null");
-        }
-    }
-
-    // ----------------- equals/hashCode/toString -----------------
-
-    /**
      * Indicates whether some other object is "equal to" this Order.
      * Two Order objects are considered equal if they have the same ID.
      *
-     * @param o the reference object with which to compare
-     * @return true if this object is equal to the o argument; false otherwise
+     * @param o The reference object with which to compare.
+     * @return True if this object is equal to the o argument; false otherwise.
      */
     @Override
     public boolean equals(Object o) {
@@ -668,7 +315,7 @@ public class Order implements Prototype<Order> {
      * Returns a hash code value for this Order.
      * The hash code is based on the order ID.
      *
-     * @return a hash code value for this object
+     * @return A hash code value for this object.
      */
     @Override
     public int hashCode() {
@@ -679,7 +326,7 @@ public class Order implements Prototype<Order> {
      * Returns a string representation of this Order.
      * The string includes all major fields for debugging purposes.
      *
-     * @return a string representation of this object
+     * @return A string representation of this object.
      */
     @Override
     public String toString() {
@@ -697,30 +344,23 @@ public class Order implements Prototype<Order> {
 
     /**
      * Represents an item within an order.
+     * This is a nested static class as it is intrinsically linked to an Order.
      */
     public static class OrderItem {
-        private String productId;
-        private String productName;
-        private int quantity;
-        private double unitPrice;
-        private String notes;
+        private final String productId;
+        private final String productName;
+        private final int quantity;
+        private final double unitPrice;
+        private final String notes;
 
         /**
-         * Default constructor for OrderItem.
-         */
-        public OrderItem() {
-            this.quantity = 1;
-            this.unitPrice = 0.0;
-        }
-
-        /**
-         * Full constructor for OrderItem.
+         * Constructs a new OrderItem.
          *
-         * @param productId product identifier
-         * @param productName product name
-         * @param quantity quantity ordered
-         * @param unitPrice price per unit
-         * @param notes additional notes
+         * @param productId   Product identifier.
+         * @param productName Product name.
+         * @param quantity    Quantity ordered.
+         * @param unitPrice   Price per unit.
+         * @param notes       Additional notes.
          */
         public OrderItem(String productId, String productName, int quantity, double unitPrice, String notes) {
             this.productId = productId;
@@ -730,26 +370,65 @@ public class Order implements Prototype<Order> {
             this.notes = notes;
         }
 
-        // Getters and setters
-        public String getProductId() { return productId; }
-        public void setProductId(String productId) { this.productId = productId; }
+        /**
+         * Returns the product identifier.
+         *
+         * @return Product ID.
+         */
+        public String getProductId() {
+            return productId;
+        }
 
-        public String getProductName() { return productName; }
-        public void setProductName(String productName) { this.productName = productName; }
+        /**
+         * Returns the product name.
+         *
+         * @return Product name.
+         */
+        public String getProductName() {
+            return productName;
+        }
 
-        public int getQuantity() { return quantity; }
-        public void setQuantity(int quantity) { this.quantity = quantity; }
+        /**
+         * Returns the quantity ordered.
+         *
+         * @return Quantity.
+         */
+        public int getQuantity() {
+            return quantity;
+        }
 
-        public double getUnitPrice() { return unitPrice; }
-        public void setUnitPrice(double unitPrice) { this.unitPrice = unitPrice; }
+        /**
+         * Returns the price per unit.
+         *
+         * @return Unit price.
+         */
+        public double getUnitPrice() {
+            return unitPrice;
+        }
 
-        public String getNotes() { return notes; }
-        public void setNotes(String notes) { this.notes = notes; }
+        /**
+         * Returns additional notes for the item.
+         *
+         * @return Notes.
+         */
+        public String getNotes() {
+            return notes;
+        }
 
+        /**
+         * Calculates the total price for this order item.
+         *
+         * @return Total price (quantity * unit price).
+         */
         public double getTotalPrice() {
             return quantity * unitPrice;
         }
 
+        /**
+         * Returns a string representation of this OrderItem.
+         *
+         * @return A string representation of this object.
+         */
         @Override
         public String toString() {
             return "OrderItem{" +
@@ -759,6 +438,32 @@ public class Order implements Prototype<Order> {
                     ", unitPrice=" + unitPrice +
                     ", totalPrice=" + getTotalPrice() +
                     '}';
+        }
+
+        /**
+         * Indicates whether some other object is "equal to" this OrderItem.
+         * Two OrderItem objects are considered equal if they have the same product ID.
+         *
+         * @param o The reference object with which to compare.
+         * @return True if this object is equal to the o argument; false otherwise.
+         */
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            OrderItem orderItem = (OrderItem) o;
+            return Objects.equals(productId, orderItem.productId);
+        }
+
+        /**
+         * Returns a hash code value for this OrderItem.
+         * The hash code is based on the product ID.
+         *
+         * @return A hash code value for this object.
+         */
+        @Override
+        public int hashCode() {
+            return Objects.hash(productId);
         }
     }
 }
