@@ -1,6 +1,8 @@
 package it.unicam.cs.ids.filieraagricola.controllers;
 
+import it.unicam.cs.ids.filieraagricola.controllers.dto.PartecipationDto;
 import it.unicam.cs.ids.filieraagricola.model.Event;
+import it.unicam.cs.ids.filieraagricola.model.Participation;
 import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.services.EventService;
 import it.unicam.cs.ids.filieraagricola.services.UserService;
@@ -49,6 +51,24 @@ public class EventController {
         }
         Boolean b = service.delete(id);
         return ResponseEntity.ok(b);
+    }
+
+    @GetMapping("/{eventId}/partecipations")
+    public List<Participation> getPartecipation(@PathVariable String eventId) {
+        return service.getPartecipations(eventId);
+    }
+    @GetMapping("/{eventId}/partecipations/{partecipationId}")
+    public Participation getPartecipation(@PathVariable String eventId,@PathVariable String partecipationId) {
+        return service.getPartecipation(partecipationId);
+    }
+    @DeleteMapping("/{eventId}/partecipations/{partecipationId}")
+    public boolean deletePartecipations(@PathVariable String eventId,@PathVariable String partecipationId) {
+        return service.deletePartecipation(partecipationId);
+    }
+
+    @PostMapping("/{eventId}/partecipations")
+    public boolean createPartecipation(@PathVariable String eventId, @RequestBody PartecipationDto partecipationDto) {
+        return service.createPartecipation(eventId,partecipationDto);
     }
 
 
