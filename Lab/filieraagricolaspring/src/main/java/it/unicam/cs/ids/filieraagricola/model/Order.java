@@ -26,6 +26,7 @@ import java.util.UUID;
  * to {@link User} in this project. Orders are created and persisted via {@code OrderService}.</p>
  */
 @Entity
+@Table(name = "orders")
 public class Order  {
 
     /**
@@ -49,7 +50,7 @@ public class Order  {
     /**
      * Items that compose the order. Each item contains product reference and quantity.
      */
-    @ManyToMany
+    @OneToMany
     private List<OrderItem> orderItems;
 
     /**
