@@ -21,7 +21,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody CreateUserDto createUserDto) {
-        if (!userService.hasRole(UserRole.PLATFORM_MANAGER)) {
+       if (!userService.hasRole(UserRole.PLATFORM_MANAGER)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
         User u = userService.createUser(createUserDto.getPrototypeName(), createUserDto.getUsername(), createUserDto.getPassword(), createUserDto.getEmail());

@@ -1,10 +1,7 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 import jakarta.annotation.Nullable;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 
 import java.sql.Timestamp;
 import java.util.List;
@@ -52,7 +49,7 @@ public class Order  {
     /**
      * Items that compose the order. Each item contains product reference and quantity.
      */
-    @OneToMany
+    @ManyToMany
     private List<OrderItem> orderItems;
 
     /**

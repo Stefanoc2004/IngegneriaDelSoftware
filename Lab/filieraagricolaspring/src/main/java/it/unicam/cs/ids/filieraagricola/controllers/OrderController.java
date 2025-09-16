@@ -1,9 +1,14 @@
 package it.unicam.cs.ids.filieraagricola.controllers;
 
+import it.unicam.cs.ids.filieraagricola.controllers.dto.OrderDto;
 import it.unicam.cs.ids.filieraagricola.model.Order;
 import it.unicam.cs.ids.filieraagricola.model.OrderStatus;
+import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.services.OrderService;
+import it.unicam.cs.ids.filieraagricola.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,7 +18,8 @@ import java.util.List;
 public class OrderController {
     @Autowired
     private OrderService orderService;
-
+    @Autowired
+    private UserService userService;
 
 
     @GetMapping
@@ -33,8 +39,22 @@ public class OrderController {
         return orderService.findBySeller(sellerId);
     }
     @DeleteMapping("/{id}")
-    public boolean deleteOrder(@PathVariable String id) {
-        return orderService.deleteOrder(id);
+    public ResponseEntity<Boolean> deleteOrder(@PathVariable String id) {
+        if (!userService.hasRole(UserRole.PRODUCER)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+        Boolean done = orderService.deleteOrder(id);
+        return ResponseEntity.ok(done);
+    }
+    @PostMapping()
+    public ResponseEntity<Boolean> createOrder(@RequestBody OrderDto orderDto) {
+        //TODO da capire il ruolo corretto che può creare gli ordini
+       // if (!userService.hasRole(UserRole.PRODUCER)) {
+        //return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+       // }
+
+        Boolean done = orderService.createOrder(orderDto);
+        return ResponseEntity.ok(done);
     }
 
 

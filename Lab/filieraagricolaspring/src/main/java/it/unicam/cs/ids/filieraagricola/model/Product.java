@@ -367,4 +367,11 @@ public class Product  {
                 ", category='" + category + '\'' +
                 '}';
     }
+
+    public double getPrice() {
+        return 0;
+    }
+    public void setPrice(double price) {
+
+    }
 }
