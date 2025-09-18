@@ -56,7 +56,7 @@ public class SupplyChainController {
 
     @PostMapping("")
     public SupplyChain createSupplayChain(@RequestBody CreateSupplyChainDto dto) {
-        return service.createSupplyChain(dto.getSupplyChainName(), new LinkedList<>());
+        return service.createSupplyChain(dto.getSupplyChainName(), new LinkedList<>(), dto.getPoints());
     }
 
     @GetMapping("/findSupplyChainByTheName/{name}")

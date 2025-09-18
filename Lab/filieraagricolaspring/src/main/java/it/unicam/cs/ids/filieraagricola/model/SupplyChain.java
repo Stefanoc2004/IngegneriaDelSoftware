@@ -1,8 +1,6 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 
 import java.sql.Time;
 import java.sql.Timestamp;
@@ -32,6 +30,12 @@ public class SupplyChain  {
     private List<Product> products;
     private Timestamp creationDate;
     private String territorialArea;
+    @Convert(converter = SupplayChainPointsListConverter.class)
+    @Column(name = "points",nullable = false)
+    private List<SupplyChainPoint> points;
+
+
+
 
     /**
      * Default constructor for frameworks. Initializes products to an empty list
@@ -109,6 +113,8 @@ public class SupplyChain  {
         this.territorialArea = other.territorialArea;
         this.products = other.products;
     }
+
+
 
     /**
      * Returns the unique identifier of the supply chain.
@@ -483,5 +489,14 @@ public class SupplyChain  {
                 ", name='" + name + '\'' +
                 ", productsCount=" + (products == null ? 0 : products.size()) +
                 '}';
+    }
+
+
+    public List<SupplyChainPoint> getPoints() {
+        return points;
+    }
+
+    public void setPoints(List<SupplyChainPoint> points) {
+        this.points = points;
     }
 }

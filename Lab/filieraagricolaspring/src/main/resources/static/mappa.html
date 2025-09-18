@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="it">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Supply Chains Map</title>
+
+    <!-- Bootstrap 5 (come richiesto) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Leaflet (mappa, gratuito, no chiavi) -->
+    <link
+            rel="stylesheet"
+            href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+            integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+            crossorigin=""
+    />
+    <script
+            src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""
+    ></script>
+
+    <style>
+        /* Altezza fissa del contenitore mappa */
+        #map {
+            height: 60vh;
+            min-height: 420px;
+            border-radius: 0.5rem;
+        }
+        .leaflet-container {
+            font: inherit; /* font coerente con Bootstrap */
+        }
+    </style>
+</head>
+<body class="bg-light">
+<nav class="navbar navbar-expand-md navbar-dark bg-dark">
+    <div class="container">
+        <span class="navbar-brand">Supply Chains Map</span>
+    </div>
+</nav>
+
+<main class="container my-4">
+    <div class="row g-4">
+        <div class="col-12 col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">Seleziona una supply chain</h5>
+
+                    <div class="mb-3">
+                        <label for="scSelect" class="form-label">Supply Chain</label>
+                        <select id="scSelect" class="form-select" disabled>
+                            <option value="">Caricamento...</option>
+                        </select>
+                    </div>
+
+                    <div id="info" class="small text-muted">
+                        Seleziona una supply chain per visualizzare i punti sulla mappa.
+                    </div>
+
+                    <div id="loading" class="d-flex align-items-center gap-2 mt-3">
+                        <div class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></div>
+                        <span>Caricamento elenco supply chain…</span>
+                    </div>
+
+                    <div id="legend" class="mt-3 d-none">
+                        <span class="badge rounded-pill text-bg-primary">●</span>
+                        <span class="small">Punto della supply chain</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body p-2">
+                    <div id="map" class="w-100"></div>
+                </div>
+                <div class="card-footer text-end small text-muted">
+                    Map data © <a href="https://openstreetmap.org" target="_blank" rel="noopener noreferrer">OpenStreetMap</a> contributors
+                    | Tiles by <a href="https://carto.com/" target="_blank" rel="noopener noreferrer">Carto</a>/<a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OSM</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Toast error -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080">
+    <div id="errorToast" class="toast text-bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto">Errore</strong>
+            <small>now</small>
+            <button type="button" class="btn-close btn-close-white ms-2 mb-1" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="errorToastBody">Si è verificato un errore.</div>
+    </div>
+</div>
+
+<script>
+    // === Configurazione base ===
+    // Endpoint REST lato Spring Boot (stessa origin): GET /api/supply_chain
+    // Formato atteso:
+    // [
+    //   {
+    //     "id": "sc-001",
+    //     "name": "Catena Europa",
+    //     "points": [
+    //       { "lat": 45.4642, "lng": 9.19 },
+    //       { "lat": 48.8566, "lng": 2.3522 }
+    //     ]
+    //   },
+    //   ...
+    // ]
+
+    const API_URL = "/supplychain";
+
+    // === UI ===
+    const scSelect = document.getElementById("scSelect");
+    const loadingEl = document.getElementById("loading");
+    const legendEl = document.getElementById("legend");
+    const errorToastEl = document.getElementById("errorToast");
+    const errorToastBodyEl = document.getElementById("errorToastBody");
+    const errorToast = new bootstrap.Toast(errorToastEl, { delay: 6000 });
+
+    // === Mappa Leaflet ===
+    // Vista iniziale su Europa; verrà adattata ai punti selezionati
+    const map = L.map("map", {
+        zoomControl: true
+    }).setView([48.5, 11.0], 4);
+
+    // Layer tile: gratuito, no chiave (rispettare termini d'uso e rate)
+    // Puoi sostituire con altri tile OSM compatibili se preferisci
+    const tileLayer = L.tileLayer(
+        // Carto Positron tiles (free, no key)
+        "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+        {
+            maxZoom: 19,
+            attribution:
+                '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+        }
+    ).addTo(map);
+
+    // Layer dei marker per ogni selezione
+    let pointsLayer = L.layerGroup().addTo(map);
+
+    // Disegna i punti come circleMarker
+    function renderPoints(points) {
+        pointsLayer.clearLayers();
+
+        if (!Array.isArray(points) || points.length === 0) {
+            return;
+        }
+
+        const latLngs = [];
+
+        points.forEach(p => {
+            if (typeof p?.lat === "number" && typeof p?.lng === "number") {
+                const latLng = L.latLng(p.lat, p.lng);
+                latLngs.push(latLng);
+
+                L.circleMarker(latLng, {
+                    radius: 6,
+                    weight: 1.5,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(pointsLayer);
+            }
+        });
+
+        if (latLngs.length > 0) {
+            map.fitBounds(L.latLngBounds(latLngs), { padding: [24, 24] });
+        }
+    }
+
+    // Popola la select
+    async function loadSupplyChains() {
+        try {
+            const res = await fetch(API_URL, { headers: { "Accept": "application/json" } });
+            if (!res.ok) throw new Error("HTTP " + res.status);
+            const data = await res.json();
+
+            scSelect.innerHTML = "";
+            if (!Array.isArray(data) || data.length === 0) {
+                scSelect.disabled = true;
+                scSelect.innerHTML = '<option value="">Nessuna supply chain disponibile</option>';
+                return;
+            }
+
+            // Placeholder
+            scSelect.insertAdjacentHTML("beforeend", '<option value="">— Seleziona —</option>');
+
+            // Opzioni
+            for (const sc of data) {
+                const opt = document.createElement("option");
+                opt.value = sc.id;
+                opt.textContent = sc.name || sc.id;
+                opt.dataset.points = JSON.stringify(sc.points || []);
+                scSelect.appendChild(opt);
+            }
+
+            scSelect.disabled = false;
+            legendEl.classList.remove("d-none");
+        } catch (err) {
+            showError("Impossibile caricare l'elenco delle supply chain: " + (err?.message || err));
+        } finally {
+            loadingEl.classList.add("d-none");
+        }
+    }
+
+    function showError(msg) {
+        errorToastBodyEl.textContent = msg;
+        errorToast.show();
+    }
+
+    // Cambio selezione
+    scSelect.addEventListener("change", () => {
+        const sel = scSelect.options[scSelect.selectedIndex];
+        const points = sel?.dataset?.points ? JSON.parse(sel.dataset.points) : [];
+        renderPoints(points);
+    });
+
+    // Avvio
+    loadSupplyChains();
+</script>
+</body>
+</html>

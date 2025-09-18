@@ -2,6 +2,7 @@ package it.unicam.cs.ids.filieraagricola.services;
 
 import it.unicam.cs.ids.filieraagricola.model.Product;
 import it.unicam.cs.ids.filieraagricola.model.SupplyChain;
+import it.unicam.cs.ids.filieraagricola.model.SupplyChainPoint;
 import it.unicam.cs.ids.filieraagricola.model.repositories.ProductRepository;
 import it.unicam.cs.ids.filieraagricola.model.repositories.SupplyChainRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,11 +111,12 @@ public class SupplyChainService {
      * @param products        products to include (must not be null)
      * @throws IllegalArgumentException if inputs are invalid
      */
-    public SupplyChain createSupplyChain(String supplyChainName, List<Product> products) {
+    public SupplyChain createSupplyChain(String supplyChainName, List<Product> products, List<SupplyChainPoint> points) {
         if (supplyChainName == null || supplyChainName.trim().isEmpty()) throw new IllegalArgumentException("Supply chain name cannot be null or empty");
         if (products == null) throw new IllegalArgumentException("Product list cannot be null");
 
         var supplyChain = buildSupplyChain(supplyChainName, products);
+        supplyChain.setPoints(points);
         return supplyChainList.save(supplyChain);
     }
 
