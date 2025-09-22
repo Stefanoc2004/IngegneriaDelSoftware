@@ -1,10 +1,20 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
-import jakarta.persistence.AttributeConverter;
-
 import java.util.LinkedList;
 import java.util.List;
 
+import jakarta.persistence.AttributeConverter;
+
+/**
+ * JPA {@link AttributeConverter} mapping between a list of {@link SupplyChainPoint}
+ * and a compact string representation.
+ *
+ * <p>Format used: each point is serialized as <code>(lat;lng)</code> and points
+ * are joined by commas, for example: <code>(43.123;13.456),(43.124;13.457)</code>.</p>
+ *
+ * <p>Parsing is intentionally lenient for empty segments; values shorter than
+ * three characters are ignored.</p>
+ */
 public class SupplayChainPointsListConverter implements AttributeConverter<List<SupplyChainPoint>, String> {
 
 

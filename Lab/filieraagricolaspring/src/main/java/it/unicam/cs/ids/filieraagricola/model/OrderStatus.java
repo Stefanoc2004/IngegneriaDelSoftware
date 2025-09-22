@@ -1,11 +1,11 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 /**
- * Represents the possible states of an order in the agricultural supply chain platform.
+ * Lifecycle states for an {@link Order}.
  *
- * <p>Orders progress through various states from initial creation to final delivery
- * or cancellation. This enum defines all possible order states and their typical
- * progression flow.</p>
+ * <p>Typical progression: <code>PENDING</code> → <code>CONFIRMED</code> →
+ * <code>PROCESSING</code> → <code>SHIPPED</code> → <code>DELIVERED</code>.
+ * Cancellation can occur from earlier states.</p>
  */
 public enum OrderStatus {
     PENDING,

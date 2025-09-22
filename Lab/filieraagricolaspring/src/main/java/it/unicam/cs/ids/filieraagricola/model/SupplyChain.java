@@ -2,7 +2,6 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import jakarta.persistence.*;
 
-import java.sql.Time;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -11,13 +10,10 @@ import java.util.stream.Collectors;
 /**
  * Represents a supply chain (filiera) within the platform.
  *
- * <p>This class implements the Prototype pattern through {@link #clone()} and
- * applies defensive copying for internal collections. Getters return unmodifiable
- * views and setters perform validation and defensive copying to preserve
- * encapsulation.</p>
- *
- * @author Agricultural Platform Team
- * @version 1.0
+ * <p>Encapsulates descriptive metadata, associated {@link Product} instances and
+ * geolocated {@link SupplyChainPoint points}. The class exposes validation
+ * helpers and simple queries (such as category aggregation) while keeping state
+ * management minimal and consistent with the current implementation.</p>
  */
 @Entity
 public class SupplyChain  {
@@ -176,24 +172,22 @@ public class SupplyChain  {
     }
 
     /**
-     * Returns an unmodifiable view of the products associated with this supply chain.
-     * The returned list contains the internal Product instances; callers should
-     * treat them as read-only or the service layer should return copies where needed.
+     * Returns the list of products associated with this supply chain.
      *
-     * @return unmodifiable list of products
+     * <p>Note: this implementation returns the internal list reference as-is.</p>
      */
     public List<Product> getProducts() {
         return products;
     }
 
+    /*
     /**
      * Sets the list of products for this supply chain. Performs defensive copying
      * by calling {@link Product#clone()} on each element.
      *
      * @param products list of products (must not be null)
      * @throws IllegalArgumentException if products is null
-     */
-    /*
+
     public void setProducts(List<Product> products) {
         validateProducts(products);
         List<Product> copy = new ArrayList<>(products.size());
@@ -204,6 +198,11 @@ public class SupplyChain  {
     }
     */
 
+    /**
+     * Sets the products associated with this supply chain.
+     *
+     * <p>No defensive copy is performed in the current implementation.</p>
+     */
     public void setProducts(List<Product> products) {
         this.products = products;
     }
@@ -268,11 +267,11 @@ public class SupplyChain  {
         return products != null && products.contains(product);
     }
 
+    /*
     /**
      * Returns a list of organic products. Each returned element is a defensive copy.
      *
      * @return unmodifiable list of copies of organic products
-     */
     /*
     public List<Product> getOrganicProducts() {
         List<Product> result = products.stream()
@@ -284,12 +283,11 @@ public class SupplyChain  {
     }
     */
 
-
+    /*
     /**
      * Returns a list of certified products. Each returned element is a defensive copy.
      *
      * @return unmodifiable list of copies of certified products
-     */
     /*
     public List<Product> getCertifiedProducts() {
         List<Product> result = products.stream()
@@ -302,12 +300,12 @@ public class SupplyChain  {
 
      */
 
+    /*
     /**
      * Returns products that match the provided category. Returned elements are copies.
      *
      * @param category category to filter by (case-insensitive)
      * @return unmodifiable list of copies of matching products; empty list if category invalid
-     */
     /* public List<Product> getProductsByCategory(String category) {
         if (category == null || category.trim().isEmpty()) {
             return Collections.emptyList();
@@ -322,13 +320,12 @@ public class SupplyChain  {
     }
     */
 
-
+    /*
     /**
      * Returns products considered "fresh" (produced within the last 30 days).
      * Each returned product is a defensive copy.
      *
      * @return unmodifiable list of copies of fresh products
-     */
     /* public List<Product> getFreshProducts() {
         List<Product> result = products.stream()
                 .filter(Objects::nonNull)
@@ -338,6 +335,7 @@ public class SupplyChain  {
         return Collections.unmodifiableList(result);
     }
     */
+
     /**
      * Checks whether this supply chain is active. Active is defined as having at least
      * one product and a creation date not older than 6 months.
@@ -491,10 +489,12 @@ public class SupplyChain  {
     }
 
 
+    /** Returns the geolocated points of this supply chain. */
     public List<SupplyChainPoint> getPoints() {
         return points;
     }
 
+    /** Sets the geolocated points of this supply chain. */
     public void setPoints(List<SupplyChainPoint> points) {
         this.points = points;
     }

@@ -248,6 +248,10 @@ public class Order  {
         this.deliveryMethod = deliveryMethod;
     }
 
+    /**
+     * Returns a concise textual representation including key fields.
+     * Intended for diagnostics and logging only.
+     */
     @Override
     public String toString() {
         return "Order{" +

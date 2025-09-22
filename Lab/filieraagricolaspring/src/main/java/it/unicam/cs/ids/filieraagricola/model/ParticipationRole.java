@@ -1,7 +1,7 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 /**
- * Represents the possible roles an actor can have in an event participation.
+ * Roles available for a {@link Participation} in an {@link Event}.
  */
 public enum ParticipationRole {
     ORGANIZER,

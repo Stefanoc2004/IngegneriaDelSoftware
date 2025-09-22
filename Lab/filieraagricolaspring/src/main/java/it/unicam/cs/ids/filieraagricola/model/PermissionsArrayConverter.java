@@ -2,6 +2,12 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import jakarta.persistence.AttributeConverter;
 
+/**
+ * JPA {@link AttributeConverter} that stores an array of {@link UserRole}
+ * as a single comma-separated string and converts it back when reading.
+ *
+ * <p>Example format: {@code "PRODUCER,CURATOR"}.</p>
+ */
 public class PermissionsArrayConverter implements AttributeConverter<UserRole[], String> {
 
 

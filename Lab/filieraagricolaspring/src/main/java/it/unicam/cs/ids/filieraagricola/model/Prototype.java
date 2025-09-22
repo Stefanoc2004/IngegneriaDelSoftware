@@ -3,10 +3,8 @@ package it.unicam.cs.ids.filieraagricola.model;
 /**
  * Generic Prototype interface used to implement the Prototype design pattern.
  *
- * <p>Classes implementing {@code Prototype<T>} must provide a {@code clone()}
- * method that returns an instance of {@code T}. Using a generic interface
- * avoids raw-type casts and allows covariant return types in concrete classes
- * (e.g. {@code public Product clone()}).</p>
+ * <p>Implementors provide a type-safe <code>clone</code> method returning the
+ * concrete type, enabling copying without raw casts.</p>
  *
  * @param <T> concrete type returned by {@link #clone()}
  */

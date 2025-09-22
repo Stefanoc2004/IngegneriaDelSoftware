@@ -2,8 +2,8 @@ package it.unicam.cs.ids.filieraagricola.model;
 /**
  * Enumerates user roles (actor types) in the agricultural supply-chain platform.
  *
- * <p>These roles correspond to the actors described in the project specification:
- * PRODUCER, TRANSFORMER, DISTRIBUTOR, CURATOR, ANIMATOR, BUYER, GENERIC_USER and PLATFORM_MANAGER.</p>
+ * <p>Values correspond to the domain actors defined in the specifications and
+ * are used across authorization, content creation and marketplace features.</p>
  */
 public enum UserRole {
     PRODUCER,

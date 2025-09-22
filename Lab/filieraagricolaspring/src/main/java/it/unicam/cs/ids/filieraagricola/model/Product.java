@@ -4,8 +4,6 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
 import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.LocalDate;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -328,9 +326,17 @@ public class Product  {
                 '}';
     }
 
+    /**
+     * Returns the unit price associated with this product.
+     */
     public double getPrice() {
         return price;
     }
+    /**
+     * Sets the unit price associated with this product without additional validation.
+     *
+     * @param price monetary value to assign
+     */
     public void setPrice(double price) {
         this.price = price;
     }

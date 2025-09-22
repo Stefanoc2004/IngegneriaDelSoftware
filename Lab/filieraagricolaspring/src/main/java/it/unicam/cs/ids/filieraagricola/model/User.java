@@ -1,11 +1,14 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
 
-import jakarta.persistence.*;
-
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 
 /**
  * Represents a user (actor) of the agricultural supply-chain platform.
@@ -237,6 +240,16 @@ public class User implements Prototype<User> {
 
     // ---------- Validation helpers ----------
 
+    /**
+     * Validates the identifier according to the current implementation rules.
+     *
+     * <p><b>Current behaviour:</b> throws an {@link IllegalArgumentException}
+     * when the provided id is not {@code null}. This reflects the existing
+     * implementation and is intentionally documented without altering logic.</p>
+     *
+     * @param id candidate identifier
+     * @throws IllegalArgumentException when {@code id} is not {@code null}
+     */
     private static void validateId(String id) {
         if (id != null) {
             throw new IllegalArgumentException("User id cannot be negative");

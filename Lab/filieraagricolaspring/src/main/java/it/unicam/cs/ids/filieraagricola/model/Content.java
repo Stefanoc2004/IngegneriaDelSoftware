@@ -290,6 +290,14 @@ public class Content  {
         return type;
     }
 
+    /**
+     * Sets the semantic type of this content.
+     *
+     * <p>The type categorizes the content (for example certificates or procedures)
+     * and can be used by services and UI to filter or render appropriate views.</p>
+     *
+     * @param type the {@link ContentType} to assign to this content (may be {@code null})
+     */
     public void setType(ContentType type) {
         this.type = type;
     }
@@ -300,15 +308,29 @@ public class Content  {
      *
      * @return a hash code value for this object
      */
+    @Override
     public int hashCode() {
         return Objects.hash(id);
     }
 
 
+    /**
+     * Returns the supply-chain point associated with this content.
+     *
+     * <p>When set, this link identifies the specific {@link SupplyChainPoint}
+     * (e.g., farm, market) the content refers to.</p>
+     *
+     * @return the linked {@link SupplyChainPoint}, or {@code null} if none is set
+     */
     public SupplyChainPoint getPoint() {
         return point;
     }
 
+    /**
+     * Associates this content with a supply-chain point.
+     *
+     * @param point the {@link SupplyChainPoint} this content refers to (may be {@code null})
+     */
     public void setPoint(SupplyChainPoint point) {
         this.point = point;
     }
