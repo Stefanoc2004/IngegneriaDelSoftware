@@ -17,6 +17,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Application service for managing {@link Event} and related {@link Participation}.
+ *
+ * <p>Provides creation, retrieval and deletion of events and participations using
+ * Spring Data repositories.</p>
+ */
 @Service
 public class EventService {
     @Autowired
@@ -26,17 +32,22 @@ public class EventService {
     @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Assigns a new id and persists the event.
+     */
     public Event organizeEvent(Event event) {
         event.giveNewId();
         return repository.save(event);
     }
 
+    /** Returns all events. */
     public List<Event> getEvents() {
         return repository.findAll();
     }
 
 
 
+    /** Returns an event by id or null if not found. */
     public Event getEvent(String id) {
         Optional<Event> opt = repository.findById(id);
         if (opt.isPresent()) {
@@ -44,6 +55,7 @@ public class EventService {
         }
         return null;
     }
+    /** Deletes an event by id if it exists. */
     public boolean delete(String id) {
         Event event = getEvent(id);
         if (event != null) {
@@ -53,6 +65,7 @@ public class EventService {
         return false;
     }
 
+    /** Returns participations for a given event id, or empty list if event missing. */
     public List<Participation> getPartecipations(String eventId) {
         Optional<Event> opt = repository.findById(eventId);
         if (opt.isEmpty()) {
@@ -62,6 +75,7 @@ public class EventService {
     }
 
 
+    /** Returns a participation by id or null if not found. */
     public Participation getPartecipation(String id) {
         Optional<Participation> opt = partecipationRepository.findById(id);
         if (opt.isPresent()) {
@@ -69,6 +83,7 @@ public class EventService {
         }
         return null;
     }
+    /** Deletes a participation by id if it exists. */
     public boolean deletePartecipation(String id) {
         Participation participation = getPartecipation(id);
         if (participation != null) {
@@ -79,6 +94,7 @@ public class EventService {
     }
 
 
+    /** Creates a new participation for the given event from a DTO. */
     public boolean createPartecipation(String eventId, PartecipationDto partecipationDto) {
 
         Optional<Event> opt = repository.findById(eventId);

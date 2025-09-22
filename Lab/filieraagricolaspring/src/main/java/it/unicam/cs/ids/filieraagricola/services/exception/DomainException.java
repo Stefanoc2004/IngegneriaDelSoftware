@@ -7,7 +7,7 @@ package it.unicam.cs.ids.filieraagricola.services.exception;
  * to allow centralized handling and consistent error semantics across the system.</p>
  *
  * <p>This hierarchy follows project rules to centralize exceptions under
- * {@code it.unicam.cs.ids.filieraagricola.service.exception}.</p>
+ * <code>it.unicam.cs.ids.filieraagricola.services.exception</code>.</p>
  */
 public class DomainException extends RuntimeException {
 

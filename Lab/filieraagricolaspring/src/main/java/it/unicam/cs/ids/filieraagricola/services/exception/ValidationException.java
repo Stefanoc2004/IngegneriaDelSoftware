@@ -5,7 +5,7 @@ package it.unicam.cs.ids.filieraagricola.services.exception;
  * for the requested operation.
  *
  * <p>Thrown by services and use cases when preconditions or invariants are not met
- * (e.g., null/empty arguments, invalid state transitions). Centralized here per
+ * (for example null/empty arguments, invalid state transitions). Centralized here per
  * project rules.</p>
  */
 public class ValidationException extends DomainException {

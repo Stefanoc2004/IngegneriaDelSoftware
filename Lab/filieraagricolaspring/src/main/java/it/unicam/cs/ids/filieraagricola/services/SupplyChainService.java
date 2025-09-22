@@ -12,12 +12,10 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 /**
- * Service responsible for managing supply chains and products.
+ * Application service responsible for managing {@link SupplyChain}, products and points.
  *
- * <p>The service stores defensive copies and returns clones to callers, avoiding
- * exposure of internal mutable state. Product cloning is used to enforce the
- * Prototype pattern contract. Public list-returning methods produce lists via
- * {@link java.util.stream.Stream#toList()} to avoid leaking internal collections.</p>
+ * <p>Provides basic create/delete/find operations relying on Spring Data repositories.
+ * Current implementation does not perform defensive copying beyond what entities expose.</p>
  */
 @Service
 public class SupplyChainService {
@@ -30,11 +28,7 @@ public class SupplyChainService {
     private SupplayChainPointRepository supplayChainPointRepository;
 
     /**
-     * Acquires a product into the system.
-     *
-     * <p>Stores a defensive clone internally and returns a clone to the caller.</p>
-     *
-     * @param product product to acquire (must not be null)
+     * Persists a new product and adds it to the specified supply chain.
      */
     public Product acquireProduct(Product product, String supplyChainId) {
         Optional<SupplyChain> opt = supplyChainRepository.findById(supplyChainId);
@@ -56,10 +50,9 @@ public class SupplyChainService {
     }
 
     /**
-     * Sells (removes) a product from the managed collection.
+     * Removes a product from the specified supply chain and deletes it.
      *
-     * @return {@code true} if the product was removed; {@code false} otherwise
-     * @throws IllegalArgumentException if {@code product} is null or not available
+     * @return true if removed; false otherwise
      */
     public boolean deleteProduct(String supplyChainId, String id ) {
         // Verifichiamo se esite dentro al repository un prodotto con l'Id fornito
@@ -82,11 +75,7 @@ public class SupplyChainService {
         return false;
     }
 
-    /**
-     * Returns a list of managed products as clones.
-     *
-     * <p>Each element in the returned list is a defensive clone produced by
-     */
+    /** Returns the product list for a supply chain id, or null if chain missing. */
     public List<Product> getProductList(String supplyChainId) {
         Optional<SupplyChain> opt = supplyChainRepository.findById(supplyChainId);
         if (opt.isEmpty()) {
@@ -96,22 +85,13 @@ public class SupplyChainService {
         return supplyChain.getProducts();
     }
 
-    /**
-     * Returns a list of managed supply chains as clones.
-     *
-     * <p>Each element in the returned list is a defensive clone produced by
-     */
+    /** Returns all supply chains. */
     public List<SupplyChain> getSupplyChainRepository() {
         return supplyChainRepository.findAll();
     }
 
     /**
-     * Creates a new supply chain with the given name and products.
-     *
-     *
-     * @param supplyChainName supply chain name (must not be null/empty)
-     * @param products        products to include (must not be null)
-     * @throws IllegalArgumentException if inputs are invalid
+     * Creates and persists a new supply chain with the given name, products and points.
      */
     public SupplyChain createSupplyChain(String supplyChainName, List<Product> products, List<SupplyChainPoint> points) {
         if (supplyChainName == null || supplyChainName.trim().isEmpty()) throw new IllegalArgumentException("Supply chain name cannot be null or empty");
@@ -122,45 +102,25 @@ public class SupplyChainService {
         return supplyChainRepository.save(supplyChain);
     }
 
-    /**
-     * Finds supply chains whose name contains the given pattern (case-insensitive).
-     *
-     * @param name search pattern (may not be null/empty)
-     * @return list of matching supply chain clones (empty list if none)
-     */
+    /** Returns supply chains matching the given name pattern. */
     public List<SupplyChain> findSupplyChainsByName(String name) {
-            return supplyChainRepository.findByName(name);
+        return supplyChainRepository.findByName(name);
     }
 
-    /**
-     * Finds products by category and returns clones of matching products.
-     *
-     *
-     * @param category category to filter by (must not be null/empty)
-     */
+    /** Returns products by category. */
     public List<Product> findProductsByCategory(String category) {
         return productRepository.findByCategory(category);
     }
 
     /* ----------------- private helpers ----------------- */
 
-    /**
-     * Builds a new SupplyChain instance. Products are cloned to ensure defensive isolation.
-     *
-     * @param name     supply chain name
-     * @return a new SupplyChain instance (internal instance)
-     */
+    /** Builds a new {@link SupplyChain} instance. */
     private SupplyChain buildSupplyChain(String name, List<Product> products) {
         return new SupplyChain(name, products);
     }
 
 
-    /**
-     * Acquires a point into the system.
-     *
-     * <p>Stores a defensive clone internally and returns a clone to the caller.</p>
-     *
-     */
+    /** Persists a new point and adds it to the specified supply chain. */
     public SupplyChainPoint acquirePoint(SupplyChainPoint point, String supplyChainId) {
         Optional<SupplyChain> opt = supplyChainRepository.findById(supplyChainId);
         if (opt.isEmpty()) {

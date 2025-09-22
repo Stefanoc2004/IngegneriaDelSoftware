@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * Thread-safe registry responsible for managing {@link User} prototypes.
  *
- * <p>Keys are normalized using {@code trim() + toLowerCase()} to avoid accidental
+ * <p>Keys are normalized using <code>trim() + toLowerCase()</code> to avoid accidental
  * case-related mismatches. Registered prototypes are stored and cloned on retrieval.</p>
  */
 
@@ -53,12 +53,7 @@ public class UserPrototypeRegistry {
         }
     }
 
-    /**
-     * Convenience registration that overwrites existing prototypes.
-     *
-     * @param name      prototype name
-     * @param prototype prototype
-     */
+    /** Convenience registration that overwrites existing prototypes. */
     public void registerPrototype(String name, User prototype) {
         registerPrototype(name, prototype, true);
     }

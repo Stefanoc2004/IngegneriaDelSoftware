@@ -14,6 +14,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Application service for managing {@link ProductPackage} aggregates.
+ *
+ * <p>Provides CRUD-like operations backed by Spring Data repositories. The
+ * service assembles packages from referenced {@link Product} entities.</p>
+ */
 @Service
 public class ProductPackageService {
 
@@ -24,11 +30,13 @@ public class ProductPackageService {
     private ProductPackageRepository productPackageRepository;
 
 
+    /** Returns all product packages. */
     public List<ProductPackage> findAll() {
         return productPackageRepository.findAll();
     }
 
 
+    /** Returns a package by id or null if not found. */
     public ProductPackage findById(String id) {
         Optional<ProductPackage> opt = productPackageRepository.findById(id);
         if (opt.isEmpty()) {
@@ -37,6 +45,7 @@ public class ProductPackageService {
         return opt.get();
     }
 
+    /** Deletes a package by id if present. */
     public boolean delete(String id) {
         Optional<ProductPackage> opt = productPackageRepository.findById(id);
         if (opt.isEmpty()) {
@@ -46,6 +55,9 @@ public class ProductPackageService {
         return true;
     }
 
+    /**
+     * Creates a package from the given DTO by resolving product ids.
+     */
     public ProductPackage create(ProductPackageDTO dto) {
         List<Product> products = new LinkedList<>();
         for (String productId : dto.getProductsId()) {

@@ -5,8 +5,8 @@ package it.unicam.cs.ids.filieraagricola.services.exception;
  * could not be found.
  *
  * <p>This serves as the base class for more specific not-found exceptions
- * (e.g., content, user, order). Centralized under the service.exception
- * package per project rules.</p>
+ * (for example content, user, order). Centralized under the
+ * <code>services.exception</code> package per project rules.</p>
  */
 public class NotFoundException extends DomainException {
 

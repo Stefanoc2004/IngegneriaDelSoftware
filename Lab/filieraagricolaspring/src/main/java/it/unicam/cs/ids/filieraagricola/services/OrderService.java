@@ -18,10 +18,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Service that manages Order lifecycle.
+ * Application service that manages {@link Order} lifecycle.
  *
- * <p>This service uses Spring Data repositories to persist orders and order items.
- * Methods are transactional where a group of operations must succeed or fail together.</p>
+ * <p>Uses Spring Data repositories to persist orders and order items. The current
+ * implementation performs simple create/find/delete operations without explicit
+ * transaction demarcation in this class.</p>
  */
 @Service
 public class OrderService {
@@ -38,14 +39,17 @@ public class OrderService {
     @Autowired
     private ClientHttpRequestFactorySettings clientHttpRequestFactorySettings;
 
+    /** Returns all orders. */
     public List<Order> findAll() {
         return orderRepository.findAll();
     }
 
+    /** Returns orders by {@link OrderStatus}. */
     public List<Order> findByOrderStatus(OrderStatus status) {
         return orderRepository.findByStatus(status);
     }
 
+    /** Returns orders for a given buyer id, or empty list if buyer missing. */
     public List<Order> findByBuyer(String buyerId) {
         Optional<User> opt = userRepository.findById(buyerId);
         if (opt.isPresent()) {
@@ -54,6 +58,7 @@ public class OrderService {
         return new LinkedList<>();
     }
 
+    /** Returns orders for a given seller id, or empty list if seller missing. */
     public List<Order> findBySeller(String sellerId) {
         Optional<User> opt = userRepository.findById(sellerId);
         if (opt.isPresent()) {
@@ -62,6 +67,11 @@ public class OrderService {
         return new LinkedList<>();
     }
 
+    /**
+     * Creates a new order and associated order items from the provided DTO.
+     *
+     * @return true if successfully created, false if buyer or seller missing
+     */
     public boolean createOrder(OrderDto orderDto) {
         Optional<User> optBuyer = userRepository.findById(orderDto.getBuyerId());
         if (optBuyer.isEmpty()) {
@@ -108,6 +118,7 @@ public class OrderService {
 
 
 
+    /** Deletes an order by id; also deletes the associated order items. */
     public boolean deleteOrder(String id) {
         Optional<Order> opt = orderRepository.findById(id);
         if (opt.isPresent()) {
