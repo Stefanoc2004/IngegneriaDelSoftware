@@ -30,8 +30,7 @@ public class SupplyChain  {
     private List<Product> products;
     private Timestamp creationDate;
     private String territorialArea;
-    @Convert(converter = SupplayChainPointsListConverter.class)
-    @Column(name = "points",nullable = false)
+    @OneToMany
     private List<SupplyChainPoint> points;
 
 

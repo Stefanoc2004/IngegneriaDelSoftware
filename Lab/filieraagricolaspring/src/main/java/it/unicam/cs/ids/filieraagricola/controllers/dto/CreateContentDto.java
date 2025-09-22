@@ -7,6 +7,7 @@ public class CreateContentDto {
     private String name;
     private String description;
     private ContentType type;
+    public String idSupplyChainPoint;
 
 
     public CreateContentDto() {
@@ -36,4 +37,14 @@ public class CreateContentDto {
     public void setType(ContentType type) {
         this.type = type;
     }
+
+
+    public String getIdSupplyChainPoint() {
+        return idSupplyChainPoint;
+    }
+
+    public void setIdSupplyChainPoint(String idSupplyChainPoint) {
+        this.idSupplyChainPoint = idSupplyChainPoint;
+    }
 }
+

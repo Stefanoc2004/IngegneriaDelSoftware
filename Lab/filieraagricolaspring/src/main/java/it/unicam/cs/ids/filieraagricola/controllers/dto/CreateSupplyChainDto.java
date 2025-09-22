@@ -8,11 +8,7 @@ import java.util.List;
 public class CreateSupplyChainDto {
 
 
-
     private String supplyChainName;
-
-    private List<SupplyChainPoint> points;
-
 
     public CreateSupplyChainDto() {
     }
@@ -25,11 +21,5 @@ public class CreateSupplyChainDto {
         this.supplyChainName = supplyChainName;
     }
 
-    public List<SupplyChainPoint> getPoints() {
-        return points;
-    }
 
-    public void setPoints(List<SupplyChainPoint> points) {
-        this.points = points;
-    }
 }

@@ -94,10 +94,6 @@ public class Order  {
     @Nullable
     private String notes;
 
-    /**
-     * True when the order contains only products flagged as organic.
-     */
-    private boolean organicCertified;
 
     /**
      * Delivery method identifier (for example "home_delivery", "pickup").
@@ -127,10 +123,9 @@ public class Order  {
      * @param deliveryAddress      delivery address
      * @param paymentMethod        payment method
      * @param notes                optional notes
-     * @param organicCertified     organic flag
      * @param deliveryMethod       delivery method identifier
      */
-    public Order(String id, User buyer, User seller, List<OrderItem> orderItems, double totalAmount, OrderStatus status, Timestamp orderDate, Timestamp expectedDeliveryDate, Timestamp actualDeliveryDate, String deliveryAddress, String paymentMethod, String notes, boolean organicCertified, String deliveryMethod) {
+    public Order(String id, User buyer, User seller, List<OrderItem> orderItems, double totalAmount, OrderStatus status, Timestamp orderDate, Timestamp expectedDeliveryDate, Timestamp actualDeliveryDate, String deliveryAddress, String paymentMethod, String notes,  String deliveryMethod) {
         this.id = id;
         this.buyer = buyer;
         this.seller = seller;
@@ -143,7 +138,6 @@ public class Order  {
         this.deliveryAddress = deliveryAddress;
         this.paymentMethod = paymentMethod;
         this.notes = notes;
-        this.organicCertified = organicCertified;
         this.deliveryMethod = deliveryMethod;
     }
 
@@ -245,13 +239,6 @@ public class Order  {
         this.notes = notes;
     }
 
-    public boolean isOrganicCertified() {
-        return organicCertified;
-    }
-
-    public void setOrganicCertified(boolean organicCertified) {
-        this.organicCertified = organicCertified;
-    }
 
     public String getDeliveryMethod() {
         return deliveryMethod;
@@ -276,7 +263,6 @@ public class Order  {
                 ", deliveryAddress='" + deliveryAddress + '\'' +
                 ", paymentMethod='" + paymentMethod + '\'' +
                 ", notes='" + notes + '\'' +
-                ", organicCertified=" + organicCertified +
                 ", deliveryMethod='" + deliveryMethod + '\'' +
                 '}';
     }

@@ -31,13 +31,13 @@ import java.util.UUID;
 @Entity
 public class Product  {
 
-    // TODO aggiungere il prezzo dei prodotti
     @Id
     private String id;
     private String name;
     private String category;
     private String description;
     private Date productionDate;
+    private double price;
 
     /**
      * Default no-argument constructor for frameworks (e.g., Spring Data / JPA).
@@ -65,7 +65,7 @@ public class Product  {
      * @param category       product category (for example "vegetables"); must be non-null and non-empty
      * @param description    human-readable description; must be non-null and non-empty
      * @param productionDate production/harvest date; must be non-null (current implementation does not
-     *                       enforce a "not in the future" check — see {@link #validateProductionDate(Date)} TODO)
+     *                       enforce a "not in the future" check — see {@link #validateProductionDate(Date)}
      * @throws IllegalArgumentException if any required argument is invalid according to the current validations
      */
     public Product(String id,
@@ -214,23 +214,6 @@ public class Product  {
     }
 
 
-    /**
-     * Returns whether the product is considered "fresh".
-     *
-     * <p><b>Implementation note:</b> the method compares {@link #productionDate} with the current
-     * system time using an internal threshold. The current code uses a small millisecond window.
-     * This is intentional to preserve backwards-compatibility with the existing implementation,
-     * but typically a production system would use a larger window (e.g. 30 days). See the
-     * {@code TODO} inside the method for a recommended improvement.</p>
-     *
-     * @return {@code true} if {@code productionDate} is non-null and falls within the internal freshness window
-     */
-    public boolean isFresh() {
-        // NOTE: current code uses a very small window (1800 ms). This is left unchanged here.
-        // TODO: replace literal threshold with a named constant and adjust to production policy
-        return productionDate != null && productionDate.getTime() > (new Timestamp(System.currentTimeMillis())).getTime() - 1800;
-    }
-
     // ----------------- validation helpers (private) -----------------
 
     /**
@@ -281,20 +264,6 @@ public class Product  {
         }
     }
 
-    /**
-     * Helper validating cultivation method strings.
-     *
-     * <p>This private helper currently exists for future use. It enforces
-     * a non-null/non-empty constraint and is not referenced elsewhere in the class.</p>
-     *
-     * @param method candidate cultivation method
-     * @throws IllegalArgumentException if {@code method} is {@code null} or empty
-     */
-    private static void validateCultivationMethod(String method) {
-        if (method == null || method.trim().isEmpty()) {
-            throw new IllegalArgumentException("Cultivation method cannot be null or empty");
-        }
-    }
 
     /**
      * Validate the production date parameter.
@@ -312,20 +281,7 @@ public class Product  {
         }
     }
 
-    /**
-     * Helper validating producer identifier strings.
-     *
-     * <p>This private helper currently exists for future use. It enforces
-     * a non-null/non-empty constraint and is not referenced elsewhere in the class.</p>
-     *
-     * @param producerId candidate producer identifier
-     * @throws IllegalArgumentException if {@code producerId} is {@code null} or empty
-     */
-    private static void validateProducerId(String producerId) {
-        if (producerId == null || producerId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Producer ID cannot be null or empty");
-        }
-    }
+
 
     // ----------------- equals/hashCode/toString -----------------
 
@@ -354,6 +310,10 @@ public class Product  {
         return id == null ? 0 : id.hashCode();
     }
 
+
+
+
+
     /**
      * Short textual representation containing key identifying fields.
      *
@@ -369,9 +329,9 @@ public class Product  {
     }
 
     public double getPrice() {
-        return 0;
+        return price;
     }
     public void setPrice(double price) {
-
+        this.price = price;
     }
 }

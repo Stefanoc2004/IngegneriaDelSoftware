@@ -48,10 +48,11 @@ public class OrderController {
     }
     @PostMapping()
     public ResponseEntity<Boolean> createOrder(@RequestBody OrderDto orderDto) {
-        //TODO da capire il ruolo corretto che può creare gli ordini
-       // if (!userService.hasRole(UserRole.PRODUCER)) {
-        //return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-       // }
+        if (!(userService.hasRole(UserRole.PRODUCER)
+                || userService.hasRole(UserRole.TRANSFORMER)
+                || userService.hasRole(UserRole.DISTRIBUTOR))) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
 
         Boolean done = orderService.createOrder(orderDto);
         return ResponseEntity.ok(done);

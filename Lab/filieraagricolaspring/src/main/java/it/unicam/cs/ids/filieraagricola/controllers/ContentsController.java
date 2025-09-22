@@ -2,9 +2,13 @@ package it.unicam.cs.ids.filieraagricola.controllers;
 
 import it.unicam.cs.ids.filieraagricola.controllers.dto.CreateContentDto;
 import it.unicam.cs.ids.filieraagricola.model.Content;
-import it.unicam.cs.ids.filieraagricola.model.Event;
+import it.unicam.cs.ids.filieraagricola.model.ContentState;
+import it.unicam.cs.ids.filieraagricola.model.UserRole;
 import it.unicam.cs.ids.filieraagricola.services.ContentService;
+import it.unicam.cs.ids.filieraagricola.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -15,15 +19,50 @@ public class ContentsController {
 
     @Autowired
     private ContentService service;
+    @Autowired
+    private UserService userService;
+
+
 
     @GetMapping("")
-    public List<Content> findAll() {
-        return service.getCertifications();
+    public ResponseEntity<List<Content>> findAll() {
+        if (userService.hasRole(UserRole.PRODUCER)
+                || userService.hasRole(UserRole.DISTRIBUTOR)
+                || userService.hasRole(UserRole.CURATOR)) {
+            return ResponseEntity.ok(service.getContents());
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
     }
+
+    @GetMapping("/approved")
+    public List<Content> findApproved() {
+        return service.getContents(ContentState.APPROVED);
+    }
+
+    @GetMapping("/rejected")
+    public ResponseEntity<List<Content>> findRejected() {
+        if (userService.hasRole(UserRole.PRODUCER)
+                || userService.hasRole(UserRole.DISTRIBUTOR)
+                || userService.hasRole(UserRole.CURATOR)) {
+            return ResponseEntity.ok(service.getContents(ContentState.REJECTED));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+    }
+
+    @GetMapping("/pending")
+    public ResponseEntity<List<Content>> findPending() {
+        if (userService.hasRole(UserRole.PRODUCER)
+                || userService.hasRole(UserRole.DISTRIBUTOR)
+                || userService.hasRole(UserRole.CURATOR)) {
+            return ResponseEntity.ok(service.getContents(ContentState.PENDING));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+    }
+
 
     @PostMapping("")
     public void create(@RequestBody CreateContentDto dto) {
-        service.addContent(dto.getName(), dto.getDescription(),dto.getType());
+        service.addContent(dto.getName(), dto.getDescription(),dto.getType(), dto.getIdSupplyChainPoint());
     }
 
     @GetMapping("/{id}")
@@ -35,6 +74,8 @@ public class ContentsController {
     public boolean delete(@PathVariable String id) {
         return service.removeContent(id);
     }
+
+
 
 
 

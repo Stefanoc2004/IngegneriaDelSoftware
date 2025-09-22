@@ -1,10 +1,8 @@
 package it.unicam.cs.ids.filieraagricola.services;
 
-import it.unicam.cs.ids.filieraagricola.model.Content;
-import it.unicam.cs.ids.filieraagricola.model.ContentState;
-import it.unicam.cs.ids.filieraagricola.model.ContentType;
-import it.unicam.cs.ids.filieraagricola.model.Event;
+import it.unicam.cs.ids.filieraagricola.model.*;
 import it.unicam.cs.ids.filieraagricola.model.repositories.ContentRepository;
+import it.unicam.cs.ids.filieraagricola.model.repositories.SupplayChainPointRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +13,10 @@ import java.util.Optional;
 public class ContentService {
 
     @Autowired
-    private ContentRepository certifications;
+    private ContentRepository contents;
+    @Autowired
+    private SupplayChainPointRepository supplayChainPointRepository;
+
 
 
     /**
@@ -23,8 +24,13 @@ public class ContentService {
      *
      * @return defensive copy of certifications list
      */
-    public List<Content> getCertifications() {
-        return certifications.findAll();
+    public List<Content> getContents() {
+        return contents.findAll();
+    }
+
+
+    public List<Content> getContents(ContentState state) {
+        return contents.findByState(state);
     }
 
     /**
@@ -33,14 +39,19 @@ public class ContentService {
      * @param certification certification to add (must not be null or empty)
      * @throws IllegalArgumentException if certification is null or empty
      */
-    public void addContent(String name, String certification, ContentType type) {
+    public void addContent(String name, String certification, ContentType type, String idSupplyChainPoint) {
         if (certification == null || certification.trim().isEmpty()) {
             throw new IllegalArgumentException("Certification cannot be null or empty");
+        }
+        Optional<SupplyChainPoint> opt = supplayChainPointRepository.findById(idSupplyChainPoint);
+        if (opt.isEmpty()) {
+            throw new IllegalArgumentException("The point is not valid");
         }
         String normalizedCert = certification.trim();
         Content content = new Content(null, name, normalizedCert, ContentState.PENDING);
         content.setType(type);
-        certifications.save(content);
+        content.setPoint(opt.get());
+        contents.save(content);
     }
     /**
      * Removes a certification from this producer's certifications.
@@ -52,7 +63,7 @@ public class ContentService {
         if (content == null) {
             return false;
         }
-        certifications.delete(content);
+        contents.delete(content);
         return true;
     }
 
@@ -62,7 +73,7 @@ public class ContentService {
      * @return true if the producer has at least one certification
      */
     public boolean hasCertifications() {
-        return certifications.count() > 0;
+        return contents.count() > 0;
     }
 
     /**
@@ -73,16 +84,38 @@ public class ContentService {
      */
     public boolean hasCertification(Content certification) {
         if (certification == null) return false;
-        return certifications.findById(certification.getId()).isPresent();
+        return contents.findById(certification.getId()).isPresent();
     }
 
 
     public Content getContent(String id) {
-        Optional<Content> opt = certifications.findById(id);
+        Optional<Content> opt = contents.findById(id);
         if (opt.isPresent()) {
             return opt.get();
         }
         return null;
+    }
+
+    public Boolean approve(String id) {
+        Optional<Content> opt = contents.findById(id);
+        if (opt.isPresent()) {
+            Content content = opt.get();
+            content.setState(ContentState.APPROVED);
+            contents.save(content);
+            return true;
+        }
+        return false;
+    }
+
+    public Boolean reject(String id) {
+        Optional<Content> opt = contents.findById(id);
+        if (opt.isPresent()) {
+            Content content = opt.get();
+            content.setState(ContentState.REJECTED);
+            contents.save(content);
+            return true;
+        }
+        return false;
     }
 
 }

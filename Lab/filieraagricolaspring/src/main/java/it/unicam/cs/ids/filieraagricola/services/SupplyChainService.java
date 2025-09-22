@@ -4,11 +4,11 @@ import it.unicam.cs.ids.filieraagricola.model.Product;
 import it.unicam.cs.ids.filieraagricola.model.SupplyChain;
 import it.unicam.cs.ids.filieraagricola.model.SupplyChainPoint;
 import it.unicam.cs.ids.filieraagricola.model.repositories.ProductRepository;
+import it.unicam.cs.ids.filieraagricola.model.repositories.SupplayChainPointRepository;
 import it.unicam.cs.ids.filieraagricola.model.repositories.SupplyChainRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.swing.text.html.Option;
 import java.util.*;
 
 /**
@@ -23,9 +23,11 @@ import java.util.*;
 public class SupplyChainService {
 
     @Autowired
-    private SupplyChainRepository supplyChainList;
+    private SupplyChainRepository supplyChainRepository;
     @Autowired
-    private ProductRepository productList;
+    private ProductRepository productRepository;
+    @Autowired
+    private SupplayChainPointRepository supplayChainPointRepository;
 
     /**
      * Acquires a product into the system.
@@ -35,7 +37,7 @@ public class SupplyChainService {
      * @param product product to acquire (must not be null)
      */
     public Product acquireProduct(Product product, String supplyChainId) {
-        Optional<SupplyChain> opt = supplyChainList.findById(supplyChainId);
+        Optional<SupplyChain> opt = supplyChainRepository.findById(supplyChainId);
         if (opt.isEmpty()) {
             return null;
         }
@@ -43,10 +45,10 @@ public class SupplyChainService {
         // we create a new product with a new id
         product.setId(UUID.randomUUID().toString());
         String productId = product.getId();
-        product = productList.save(product);
+        product = productRepository.save(product);
         supplyChain.getProducts().add(product);
-        supplyChainList.save(supplyChain);
-        Optional<Product> optProduct = productList.findById(productId);
+        supplyChainRepository.save(supplyChain);
+        Optional<Product> optProduct = productRepository.findById(productId);
         if (opt.isEmpty()) {
             return null;
         }
@@ -61,20 +63,20 @@ public class SupplyChainService {
      */
     public boolean deleteProduct(String supplyChainId, String id ) {
         // Verifichiamo se esite dentro al repository un prodotto con l'Id fornito
-        Optional<Product> optionalProduct = productList.findById(id);
+        Optional<Product> optionalProduct = productRepository.findById(id);
         if (optionalProduct.isPresent()) {
             // Verifichiamo se esite dentro al repository una supplychain con l'Id fornito
-            Optional<SupplyChain> opt = supplyChainList.findById(supplyChainId);
+            Optional<SupplyChain> opt = supplyChainRepository.findById(supplyChainId);
             if (opt.isPresent()) {
                 // Siamo sicuri che abbiamo il product e la supplychain di quel product
                 SupplyChain supplyChain = opt.get();
                 // Rimuoviamo il prodotto dalla supplychain
                 supplyChain.getProducts().remove(optionalProduct.get());
                 // Salviamo la supplychain
-                supplyChainList.save(supplyChain);
+                supplyChainRepository.save(supplyChain);
             }
             //Effettiva delete del prodotto
-            productList.delete(optionalProduct.get());
+            productRepository.delete(optionalProduct.get());
             return true;
         }
         return false;
@@ -86,7 +88,7 @@ public class SupplyChainService {
      * <p>Each element in the returned list is a defensive clone produced by
      */
     public List<Product> getProductList(String supplyChainId) {
-        Optional<SupplyChain> opt = supplyChainList.findById(supplyChainId);
+        Optional<SupplyChain> opt = supplyChainRepository.findById(supplyChainId);
         if (opt.isEmpty()) {
             return null;
         }
@@ -99,8 +101,8 @@ public class SupplyChainService {
      *
      * <p>Each element in the returned list is a defensive clone produced by
      */
-    public List<SupplyChain> getSupplyChainList() {
-        return supplyChainList.findAll();
+    public List<SupplyChain> getSupplyChainRepository() {
+        return supplyChainRepository.findAll();
     }
 
     /**
@@ -117,7 +119,7 @@ public class SupplyChainService {
 
         var supplyChain = buildSupplyChain(supplyChainName, products);
         supplyChain.setPoints(points);
-        return supplyChainList.save(supplyChain);
+        return supplyChainRepository.save(supplyChain);
     }
 
     /**
@@ -127,7 +129,7 @@ public class SupplyChainService {
      * @return list of matching supply chain clones (empty list if none)
      */
     public List<SupplyChain> findSupplyChainsByName(String name) {
-            return supplyChainList.findByName(name);
+            return supplyChainRepository.findByName(name);
     }
 
     /**
@@ -137,7 +139,7 @@ public class SupplyChainService {
      * @param category category to filter by (must not be null/empty)
      */
     public List<Product> findProductsByCategory(String category) {
-        return productList.findByCategory(category);
+        return productRepository.findByCategory(category);
     }
 
     /* ----------------- private helpers ----------------- */
@@ -150,5 +152,31 @@ public class SupplyChainService {
      */
     private SupplyChain buildSupplyChain(String name, List<Product> products) {
         return new SupplyChain(name, products);
+    }
+
+
+    /**
+     * Acquires a point into the system.
+     *
+     * <p>Stores a defensive clone internally and returns a clone to the caller.</p>
+     *
+     */
+    public SupplyChainPoint acquirePoint(SupplyChainPoint point, String supplyChainId) {
+        Optional<SupplyChain> opt = supplyChainRepository.findById(supplyChainId);
+        if (opt.isEmpty()) {
+            return null;
+        }
+        SupplyChain supplyChain = opt.get();
+        // we create a new product with a new id
+        point.setId(UUID.randomUUID().toString());
+        String pointId = point.getId();
+        point = supplayChainPointRepository.save(point);
+        supplyChain.getPoints().add(point);
+        supplyChainRepository.save(supplyChain);
+        Optional<SupplyChainPoint> optPoint = supplayChainPointRepository.findById(pointId);
+        if (opt.isEmpty()) {
+            return null;
+        }
+        return optPoint.get();
     }
 }

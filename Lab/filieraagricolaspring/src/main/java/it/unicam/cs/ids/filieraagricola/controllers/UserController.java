@@ -41,7 +41,7 @@ public class UserController {
 
     @GetMapping
     public ResponseEntity<List<User>> getUsers() {
-        if (!userService.hasRole(UserRole.ANIMATOR)) {
+        if (!(userService.hasRole(UserRole.ANIMATOR) || userService.hasRole(UserRole.PLATFORM_MANAGER))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new LinkedList());
         }
         List<User> u =  userService.getUsers();

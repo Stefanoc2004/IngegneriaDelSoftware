@@ -6,6 +6,7 @@ import it.unicam.cs.ids.filieraagricola.model.repositories.UserRepository;
 import it.unicam.cs.ids.filieraagricola.services.exception.ValidationException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,9 @@ public class UserService {
     private UserRepository repository;
     @Autowired
     private UserPrototypeRegistry registry;
+    @Value("${testing.free.access}")
+    private boolean freeAccess;
+
 
     /**
      * Convenience factory to create a reusable prototype with pre-filled permissions and role.
@@ -54,14 +58,7 @@ public class UserService {
         if (email == null || email.isBlank())
             throw new ValidationException("Email cannot be null or empty");
 
-        //TODO Check Email
-        // Ensure unique email (case-insensitive)
         String normalizedEmail = email.trim().toLowerCase();
-        //if (userList.stream()
-        //       .anyMatch(u -> u.getEmail() != null && u.getEmail().trim().toLowerCase().equals(normalizedEmail))) {
-        //    throw new ValidationException("Email already registered: " + email);
-        // }
-
         // Obtain a cloned prototype (throws NotFoundException if missing)
         User newUser = registry.getPrototypeOrThrow(prototypeName);
 
@@ -114,7 +111,7 @@ public class UserService {
     }
 
     public Boolean hasRole(UserRole role) {
-        if (1 == 1) {
+        if (freeAccess) {
             return true;
         }
         User user = (User) httpSession.getAttribute(USER_KEY);

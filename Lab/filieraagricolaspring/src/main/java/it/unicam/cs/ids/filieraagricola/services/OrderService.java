@@ -102,8 +102,6 @@ public class OrderService {
         order.setPaymentMethod(orderDto.getPaymentMethod());
         order.setDeliveryMethod(orderDto.getDeliveryMethod());
         order.setNotes(orderDto.getNotes());
-        order.setOrganicCertified(false);
-        //TODO calcolare l'organic certified dal product
         orderRepository.save(order);
         return true;
     }

@@ -3,9 +3,7 @@ package it.unicam.cs.ids.filieraagricola.controllers.dto;
 import java.util.List;
 
 public class OrderDto {
-
-    // TODO capire se prendere il seller o il buyer come utente già loggato
-
+    
     private String buyerId;
 
     private String sellerId;

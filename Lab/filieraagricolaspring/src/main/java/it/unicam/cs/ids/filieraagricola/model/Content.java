@@ -2,6 +2,7 @@ package it.unicam.cs.ids.filieraagricola.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 
 import java.util.Objects;
 import java.util.UUID; // Added import for UUID
@@ -43,6 +44,9 @@ public class Content  {
 
 
     private ContentType type;
+
+    @ManyToOne
+    private SupplyChainPoint point;
 
     /**
      * Default constructor for prototype pattern.
@@ -300,6 +304,17 @@ public class Content  {
         return Objects.hash(id);
     }
 
+
+    public SupplyChainPoint getPoint() {
+        return point;
+    }
+
+    public void setPoint(SupplyChainPoint point) {
+        this.point = point;
+    }
+
+
+
     /**
      * Returns a string representation of this Content.
      * The string includes all major fields for debugging purposes.
@@ -315,4 +330,8 @@ public class Content  {
                 ", state=" + state +
                 '}';
     }
+
+
+
+
 }
