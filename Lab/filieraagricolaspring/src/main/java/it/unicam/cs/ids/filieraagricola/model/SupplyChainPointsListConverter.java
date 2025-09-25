@@ -15,7 +15,7 @@ import jakarta.persistence.AttributeConverter;
  * <p>Parsing is intentionally lenient for empty segments; values shorter than
  * three characters are ignored.</p>
  */
-public class SupplayChainPointsListConverter implements AttributeConverter<List<SupplyChainPoint>, String> {
+public class SupplyChainPointsListConverter implements AttributeConverter<List<SupplyChainPoint>, String> {
 
 
     @Override

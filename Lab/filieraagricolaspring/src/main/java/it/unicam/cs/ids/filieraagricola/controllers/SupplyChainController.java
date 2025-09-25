@@ -36,7 +36,7 @@ public class SupplyChainController {
     }
 
     @DeleteMapping("/{supplyChainId}/products/{productsId}")
-    public ResponseEntity<Boolean> deleteProduct(@PathVariable String supplyChainId,@PathVariable String productsId) {
+    public ResponseEntity<Boolean> deleteProduct(@PathVariable String supplyChainId, @PathVariable String productsId) {
         if (!userService.hasRole(UserRole.PRODUCER)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
         }
@@ -56,13 +56,17 @@ public class SupplyChainController {
     }
 
     @PostMapping("")
-    public SupplyChain createSupplayChain(@RequestBody CreateSupplyChainDto dto) {
-        return service.createSupplyChain(dto.getSupplyChainName(), new LinkedList<>(), new LinkedList<>());
+    public ResponseEntity<SupplyChain> createSupplayChain(@RequestBody CreateSupplyChainDto dto) {
+        if (userService.hasRole(UserRole.PRODUCER)) {
+            return ResponseEntity.ok(service.createSupplyChain(dto.getSupplyChainName(), new LinkedList<>(), new LinkedList<>()));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+
     }
 
     @GetMapping("/findSupplyChainByTheName/{name}")
     public List<SupplyChain> findSupplyChainsByName(@PathVariable String name) {
-       return service.findSupplyChainsByName(name);
+        return service.findSupplyChainsByName(name);
     }
 
     @GetMapping("/findProductsByCategory/{category}")
@@ -80,9 +84,6 @@ public class SupplyChainController {
         return ResponseEntity.ok(p);
 
     }
-
-
-
 
 
 }

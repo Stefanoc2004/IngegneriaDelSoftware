@@ -57,18 +57,26 @@ public class EventController {
     public List<Participation> getPartecipation(@PathVariable String eventId) {
         return service.getPartecipations(eventId);
     }
+
     @GetMapping("/{eventId}/partecipations/{partecipationId}")
-    public Participation getPartecipation(@PathVariable String eventId,@PathVariable String partecipationId) {
+    public Participation getPartecipation(@PathVariable String eventId, @PathVariable String partecipationId) {
         return service.getPartecipation(partecipationId);
     }
+
     @DeleteMapping("/{eventId}/partecipations/{partecipationId}")
-    public boolean deletePartecipations(@PathVariable String eventId,@PathVariable String partecipationId) {
-        return service.deletePartecipation(partecipationId);
+    public ResponseEntity<Boolean> deletePartecipations(@PathVariable String eventId, @PathVariable String partecipationId) {
+        if (userService.hasRole(UserRole.ANIMATOR)) {
+            return ResponseEntity.ok(service.deletePartecipation(partecipationId));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
     }
 
     @PostMapping("/{eventId}/partecipations")
-    public boolean createPartecipation(@PathVariable String eventId, @RequestBody PartecipationDto partecipationDto) {
-        return service.createPartecipation(eventId,partecipationDto);
+    public ResponseEntity<Boolean> createPartecipation(@PathVariable String eventId, @RequestBody PartecipationDto partecipationDto) {
+        if (userService.hasRole(UserRole.ANIMATOR)) {
+            return ResponseEntity.ok(service.createPartecipation(eventId, partecipationDto));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
     }
 
 
