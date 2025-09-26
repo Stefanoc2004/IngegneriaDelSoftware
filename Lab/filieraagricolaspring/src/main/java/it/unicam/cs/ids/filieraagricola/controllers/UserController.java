@@ -21,7 +21,7 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<User> createUser(@RequestBody CreateUserDto createUserDto) {
-       if (!userService.hasRole(UserRole.PLATFORM_MANAGER)) {
+        if (!userService.hasRole(UserRole.PLATFORM_MANAGER)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
         User u = userService.createUser(createUserDto.getPrototypeName(), createUserDto.getUsername(), createUserDto.getPassword(), createUserDto.getEmail());
@@ -39,12 +39,18 @@ public class UserController {
         }
     }
 
+    @PostMapping("/logout")
+    public String logout() {
+        userService.logout();
+        return "done";
+    }
+
     @GetMapping
     public ResponseEntity<List<User>> getUsers() {
         if (!(userService.hasRole(UserRole.ANIMATOR) || userService.hasRole(UserRole.PLATFORM_MANAGER))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new LinkedList());
         }
-        List<User> u =  userService.getUsers();
+        List<User> u = userService.getUsers();
         return ResponseEntity.status(HttpStatus.OK).body(u);
     }
 

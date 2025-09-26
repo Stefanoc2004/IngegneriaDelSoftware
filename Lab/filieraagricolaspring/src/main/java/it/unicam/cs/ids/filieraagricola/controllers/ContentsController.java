@@ -23,10 +23,9 @@ public class ContentsController {
     private UserService userService;
 
 
-
     @GetMapping("")
     public ResponseEntity<List<Content>> findAll() {
-        if (userService.hasRole(UserRole.PRODUCER)
+        if (userService.hasRole(UserRole.TRANSFORMER)
                 || userService.hasRole(UserRole.DISTRIBUTOR)
                 || userService.hasRole(UserRole.CURATOR)) {
             return ResponseEntity.ok(service.getContents());
@@ -41,7 +40,7 @@ public class ContentsController {
 
     @GetMapping("/rejected")
     public ResponseEntity<List<Content>> findRejected() {
-        if (userService.hasRole(UserRole.PRODUCER)
+        if (userService.hasRole(UserRole.TRANSFORMER)
                 || userService.hasRole(UserRole.DISTRIBUTOR)
                 || userService.hasRole(UserRole.CURATOR)) {
             return ResponseEntity.ok(service.getContents(ContentState.REJECTED));
@@ -51,7 +50,7 @@ public class ContentsController {
 
     @GetMapping("/pending")
     public ResponseEntity<List<Content>> findPending() {
-        if (userService.hasRole(UserRole.PRODUCER)
+        if (userService.hasRole(UserRole.TRANSFORMER)
                 || userService.hasRole(UserRole.DISTRIBUTOR)
                 || userService.hasRole(UserRole.CURATOR)) {
             return ResponseEntity.ok(service.getContents(ContentState.PENDING));
@@ -61,8 +60,14 @@ public class ContentsController {
 
 
     @PostMapping("")
-    public void create(@RequestBody CreateContentDto dto) {
-        service.addContent(dto.getName(), dto.getDescription(),dto.getType(), dto.getIdSupplyChainPoint());
+    public ResponseEntity<Content> create(@RequestBody CreateContentDto dto) {
+        if (userService.hasRole(UserRole.TRANSFORMER)
+                || userService.hasRole(UserRole.DISTRIBUTOR)
+                || userService.hasRole(UserRole.CURATOR)) {
+            return ResponseEntity.ok(service.addContent(dto.getName(), dto.getDescription(), dto.getType(), dto.getIdSupplyChainPoint()));
+        }
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+
     }
 
     @GetMapping("/{id}")
@@ -74,9 +79,6 @@ public class ContentsController {
     public boolean delete(@PathVariable String id) {
         return service.removeContent(id);
     }
-
-
-
 
 
 }

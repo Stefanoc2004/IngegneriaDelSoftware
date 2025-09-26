@@ -1,6 +1,9 @@
 package it.unicam.cs.ids.filieraagricola.services;
 
-import it.unicam.cs.ids.filieraagricola.model.*;
+import it.unicam.cs.ids.filieraagricola.model.Content;
+import it.unicam.cs.ids.filieraagricola.model.ContentState;
+import it.unicam.cs.ids.filieraagricola.model.ContentType;
+import it.unicam.cs.ids.filieraagricola.model.SupplyChainPoint;
 import it.unicam.cs.ids.filieraagricola.model.repositories.ContentRepository;
 import it.unicam.cs.ids.filieraagricola.model.repositories.SupplayChainPointRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +28,6 @@ public class ContentService {
     private SupplayChainPointRepository supplayChainPointRepository;
 
 
-
     /**
      * Returns all contents.
      */
@@ -44,13 +46,13 @@ public class ContentService {
     /**
      * Creates a new pending {@link Content} associated to a {@link SupplyChainPoint}.
      *
-     * @param name             content title
-     * @param certification    content description/body (must not be null/empty)
-     * @param type             semantic type
+     * @param name               content title
+     * @param certification      content description/body (must not be null/empty)
+     * @param type               semantic type
      * @param idSupplyChainPoint target point id
      * @throws IllegalArgumentException if certification is blank or point not found
      */
-    public void addContent(String name, String certification, ContentType type, String idSupplyChainPoint) {
+    public Content addContent(String name, String certification, ContentType type, String idSupplyChainPoint) {
         if (certification == null || certification.trim().isEmpty()) {
             throw new IllegalArgumentException("Certification cannot be null or empty");
         }
@@ -62,8 +64,10 @@ public class ContentService {
         Content content = new Content(null, name, normalizedCert, ContentState.PENDING);
         content.setType(type);
         content.setPoint(opt.get());
-        contents.save(content);
+        content = contents.save(content);
+        return content;
     }
+
     /**
      * Deletes a content by id if present.
      *
@@ -94,7 +98,9 @@ public class ContentService {
     }
 
 
-    /** Returns a content by id or null if not found. */
+    /**
+     * Returns a content by id or null if not found.
+     */
     public Content getContent(String id) {
         Optional<Content> opt = contents.findById(id);
         if (opt.isPresent()) {
@@ -103,7 +109,9 @@ public class ContentService {
         return null;
     }
 
-    /** Sets content state to {@link ContentState#APPROVED} if found. */
+    /**
+     * Sets content state to {@link ContentState#APPROVED} if found.
+     */
     public Boolean approve(String id) {
         Optional<Content> opt = contents.findById(id);
         if (opt.isPresent()) {
@@ -115,7 +123,9 @@ public class ContentService {
         return false;
     }
 
-    /** Sets content state to {@link ContentState#REJECTED} if found. */
+    /**
+     * Sets content state to {@link ContentState#REJECTED} if found.
+     */
     public Boolean reject(String id) {
         Optional<Content> opt = contents.findById(id);
         if (opt.isPresent()) {

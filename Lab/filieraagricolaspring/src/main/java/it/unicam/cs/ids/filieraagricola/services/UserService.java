@@ -7,7 +7,6 @@ import it.unicam.cs.ids.filieraagricola.services.exception.ValidationException;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -76,12 +75,16 @@ public class UserService {
 
     }
 
-    /** Registers a prototype under the provided name. */
+    /**
+     * Registers a prototype under the provided name.
+     */
     public void registerPrototype(String prototypeName, User prototype) {
         registry.registerPrototype(prototypeName, prototype);
     }
 
-    /** Authenticates a user by email and password and stores it in the session. */
+    /**
+     * Authenticates a user by email and password and stores it in the session.
+     */
 
     public Boolean authenticate(String email, String password) {
         if (email == null || email.isBlank()) throw new ValidationException("Email cannot be null or empty");
@@ -98,7 +101,15 @@ public class UserService {
 
     }
 
-    /** Checks whether the current session user has the given role. */
+    public void logout() {
+        if (httpSession.getAttribute(USER_KEY) != null) {
+            httpSession.removeAttribute(USER_KEY);
+        }
+    }
+
+    /**
+     * Checks whether the current session user has the given role.
+     */
     public Boolean hasRole(UserRole role) {
         if (freeAccess) {
             return true;
@@ -116,7 +127,9 @@ public class UserService {
         return false;
     }
 
-    /** Returns all users. */
+    /**
+     * Returns all users.
+     */
     public List<User> getUsers() {
         return repository.findAll();
     }
