@@ -5,7 +5,7 @@ import it.unicam.cs.ids.filieraagricola.model.ContentState;
 import it.unicam.cs.ids.filieraagricola.model.ContentType;
 import it.unicam.cs.ids.filieraagricola.model.SupplyChainPoint;
 import it.unicam.cs.ids.filieraagricola.model.repositories.ContentRepository;
-import it.unicam.cs.ids.filieraagricola.model.repositories.SupplayChainPointRepository;
+import it.unicam.cs.ids.filieraagricola.model.repositories.SupplyChainPointRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +25,7 @@ public class ContentService {
     @Autowired
     private ContentRepository contents;
     @Autowired
-    private SupplayChainPointRepository supplayChainPointRepository;
+    private SupplyChainPointRepository supplyChainPointRepository;
 
 
     /**
@@ -56,7 +56,7 @@ public class ContentService {
         if (certification == null || certification.trim().isEmpty()) {
             throw new IllegalArgumentException("Certification cannot be null or empty");
         }
-        Optional<SupplyChainPoint> opt = supplayChainPointRepository.findById(idSupplyChainPoint);
+        Optional<SupplyChainPoint> opt = supplyChainPointRepository.findById(idSupplyChainPoint);
         if (opt.isEmpty()) {
             throw new IllegalArgumentException("The point is not valid");
         }

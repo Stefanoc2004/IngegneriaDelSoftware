@@ -4,7 +4,7 @@ import it.unicam.cs.ids.filieraagricola.model.Product;
 import it.unicam.cs.ids.filieraagricola.model.SupplyChain;
 import it.unicam.cs.ids.filieraagricola.model.SupplyChainPoint;
 import it.unicam.cs.ids.filieraagricola.model.repositories.ProductRepository;
-import it.unicam.cs.ids.filieraagricola.model.repositories.SupplayChainPointRepository;
+import it.unicam.cs.ids.filieraagricola.model.repositories.SupplyChainPointRepository;
 import it.unicam.cs.ids.filieraagricola.model.repositories.SupplyChainRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -25,7 +25,7 @@ public class SupplyChainService {
     @Autowired
     private ProductRepository productRepository;
     @Autowired
-    private SupplayChainPointRepository supplayChainPointRepository;
+    private SupplyChainPointRepository supplyChainPointRepository;
 
     /**
      * Persists a new product and adds it to the specified supply chain.
@@ -130,10 +130,10 @@ public class SupplyChainService {
         // we create a new product with a new id
         point.setId(UUID.randomUUID().toString());
         String pointId = point.getId();
-        point = supplayChainPointRepository.save(point);
+        point = supplyChainPointRepository.save(point);
         supplyChain.getPoints().add(point);
         supplyChainRepository.save(supplyChain);
-        Optional<SupplyChainPoint> optPoint = supplayChainPointRepository.findById(pointId);
+        Optional<SupplyChainPoint> optPoint = supplyChainPointRepository.findById(pointId);
         if (opt.isEmpty()) {
             return null;
         }
