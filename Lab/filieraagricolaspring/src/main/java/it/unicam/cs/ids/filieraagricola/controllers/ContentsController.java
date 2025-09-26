@@ -75,6 +75,15 @@ public class ContentsController {
         return service.getContent(id);
     }
 
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<Boolean> approveContent(@PathVariable String id) {
+        if (!userService.hasRole(UserRole.CURATOR)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
+
+        }
+        return ResponseEntity.ok(service.approve(id));
+    }
+
     @DeleteMapping("/{id}")
     public boolean delete(@PathVariable String id) {
         return service.removeContent(id);
