@@ -38,6 +38,7 @@ public class SupplyChain  {
      */
     public SupplyChain() {
         this.products = new ArrayList<>();
+        this.points = new ArrayList<>();
         this.creationDate = new Timestamp(System.currentTimeMillis());
         this.territorialArea = "default";
         this.name = "unnamed";
@@ -93,21 +94,7 @@ public class SupplyChain  {
                 "default");
     }
 
-    /**
-     * Copy constructor used to implement the Prototype pattern.
-     *
-     * @param other the SupplyChain instance to copy, must not be null
-     * @throws NullPointerException if {@code other} is null
-     */
-    public SupplyChain(SupplyChain other) {
-        Objects.requireNonNull(other, "SupplyChain to copy cannot be null");
-        this.id = other.id;
-        this.name = other.name;
-        this.description = other.description;
-        this.creationDate = other.creationDate;
-        this.territorialArea = other.territorialArea;
-        this.products = other.products;
-    }
+
 
 
 
@@ -343,8 +330,10 @@ public class SupplyChain  {
      * @return true if active, false otherwise
      */
     public boolean isActive() {
+        long sixMonthsMs = 6L * 30L * 24L * 60L * 60L * 1000L; // ~6 mesi in ms (approssimazione)
         return products != null && !products.isEmpty()
-                && creationDate.getTime() > (new Timestamp(System.currentTimeMillis())).getTime() - 259200;
+                && creationDate != null
+                && creationDate.getTime() > System.currentTimeMillis() - sixMonthsMs;
     }
 
     /**

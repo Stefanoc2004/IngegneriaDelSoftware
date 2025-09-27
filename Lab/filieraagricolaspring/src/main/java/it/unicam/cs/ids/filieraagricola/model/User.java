@@ -91,7 +91,7 @@ public class User implements Prototype<User> {
     // ---------- Getters / Setters ----------
 
     /**
-     * Returns the numeric id of the user.
+     * Returns the identifier of the user as a string.
      *
      * @return user id (0 when not persisted)
      */
@@ -100,10 +100,10 @@ public class User implements Prototype<User> {
     }
 
     /**
-     * Sets the numeric id for this user.
+     * Sets the identifier for this user.
      *
-     * @param id numeric id (must be >= 0)
-     * @throws IllegalArgumentException if id is negative
+     * @param id identifier string (must be non-null and non-empty)
+     * @throws IllegalArgumentException if id is null or empty
      */
     public void setId(String id) {
         validateId(id);
@@ -251,8 +251,8 @@ public class User implements Prototype<User> {
      * @throws IllegalArgumentException when {@code id} is not {@code null}
      */
     private static void validateId(String id) {
-        if (id != null) {
-            throw new IllegalArgumentException("User id cannot be negative");
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("User id cannot be null or empty");
         }
     }
 

@@ -131,6 +131,9 @@ public class SupplyChainService {
         point.setId(UUID.randomUUID().toString());
         String pointId = point.getId();
         point = supplyChainPointRepository.save(point);
+        if (supplyChain.getPoints() == null) {
+            supplyChain.setPoints(new java.util.ArrayList<>());
+        }
         supplyChain.getPoints().add(point);
         supplyChainRepository.save(supplyChain);
         Optional<SupplyChainPoint> optPoint = supplyChainPointRepository.findById(pointId);

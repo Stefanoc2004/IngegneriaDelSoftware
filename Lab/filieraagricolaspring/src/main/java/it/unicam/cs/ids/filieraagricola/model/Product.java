@@ -1,11 +1,10 @@
 package it.unicam.cs.ids.filieraagricola.model;
 
+import java.sql.Date;
+import java.util.UUID;
+
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-
-import java.sql.Date;
-import java.util.Objects;
-import java.util.UUID;
 
 /**
  * Represents an agricultural product within the supply-chain platform.
@@ -14,13 +13,9 @@ import java.util.UUID;
  * <ul>
  *   <li>a no-argument constructor for frameworks (JPA)</li>
  *   <li>a full parameter constructor with validation</li>
- *   <li>a copy constructor which can be used for prototype-style defensive copying</li>
+ *   <li>defensive validation utilities</li>
  *   <li>getters/setters with input validation</li>
  * </ul>
- *
- * <p><b>Note:</b> the class currently does not implement an explicit {@code clone()}
- * method; instead a copy constructor is provided and intended to be used where a
- * defensive copy is required.</p>
  *
  * <p>All public API methods and the main private helpers are documented in English
  * and intentionally reflect the current implementation behaviour so the documentation
@@ -83,20 +78,7 @@ public class Product  {
         this.productionDate = productionDate;
     }
 
-    /**
-     * Copy constructor used to implement prototype-style defensive copying.
-     *
-     * @param other the product instance to copy; must not be {@code null}
-     * @throws NullPointerException if {@code other} is {@code null}
-     */
-    public Product(Product other) {
-        Objects.requireNonNull(other, "Product to copy cannot be null");
-        this.id = (other.id == null || other.id.trim().isEmpty()) ? UUID.randomUUID().toString() : other.id.trim();
-        this.name = other.name;
-        this.category = other.category;
-        this.description = other.description;
-        this.productionDate = other.productionDate;
-    }
+
 
 
     /**
