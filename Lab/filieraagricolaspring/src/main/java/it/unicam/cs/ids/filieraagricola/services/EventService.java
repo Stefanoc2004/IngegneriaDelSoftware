@@ -1,13 +1,12 @@
 package it.unicam.cs.ids.filieraagricola.services;
 
-import it.unicam.cs.ids.filieraagricola.controllers.dto.PartecipationDto;
+import it.unicam.cs.ids.filieraagricola.controllers.dto.ParticipationDto;
 import it.unicam.cs.ids.filieraagricola.model.Event;
 import it.unicam.cs.ids.filieraagricola.model.Participation;
 import it.unicam.cs.ids.filieraagricola.model.User;
 import it.unicam.cs.ids.filieraagricola.model.repositories.EventRepository;
 import it.unicam.cs.ids.filieraagricola.model.repositories.PartecipationRepository;
 import it.unicam.cs.ids.filieraagricola.model.repositories.UserRepository;
-import jakarta.servlet.http.Part;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -95,13 +94,13 @@ public class EventService {
 
 
     /** Creates a new participation for the given event from a DTO. */
-    public boolean createPartecipation(String eventId, PartecipationDto partecipationDto) {
+    public boolean createPartecipation(String eventId, ParticipationDto participationDto) {
 
         Optional<Event> opt = repository.findById(eventId);
         if (opt.isEmpty()) {
             return false;
         }
-        Optional<User> optActor = userRepository.findById(partecipationDto.getActorId());
+        Optional<User> optActor = userRepository.findById(participationDto.getActorId());
         if (optActor.isEmpty()) {
             return false;
         }
@@ -111,7 +110,7 @@ public class EventService {
         participation.setEvent(opt.get());
         participation.setActor(optActor.get());
         participation.setRegistrationDate(new Timestamp(System.currentTimeMillis()));
-        participation.setRole(partecipationDto.getRole());
+        participation.setRole(participationDto.getRole());
         partecipationRepository.save(participation);
         return true;
 

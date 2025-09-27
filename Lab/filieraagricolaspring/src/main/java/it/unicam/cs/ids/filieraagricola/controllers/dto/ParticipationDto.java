@@ -2,7 +2,7 @@ package it.unicam.cs.ids.filieraagricola.controllers.dto;
 
 import it.unicam.cs.ids.filieraagricola.model.ParticipationRole;
 
-public class PartecipationDto {
+public class ParticipationDto {
 
     private String actorId;
 

@@ -1,6 +1,6 @@
 package it.unicam.cs.ids.filieraagricola.controllers;
 
-import it.unicam.cs.ids.filieraagricola.controllers.dto.PartecipationDto;
+import it.unicam.cs.ids.filieraagricola.controllers.dto.ParticipationDto;
 import it.unicam.cs.ids.filieraagricola.model.Event;
 import it.unicam.cs.ids.filieraagricola.model.Participation;
 import it.unicam.cs.ids.filieraagricola.model.UserRole;
@@ -72,9 +72,9 @@ public class EventController {
     }
 
     @PostMapping("/{eventId}/partecipations")
-    public ResponseEntity<Boolean> createPartecipation(@PathVariable String eventId, @RequestBody PartecipationDto partecipationDto) {
+    public ResponseEntity<Boolean> createPartecipation(@PathVariable String eventId, @RequestBody ParticipationDto participationDto) {
         if (userService.hasRole(UserRole.ANIMATOR)) {
-            return ResponseEntity.ok(service.createPartecipation(eventId, partecipationDto));
+            return ResponseEntity.ok(service.createPartecipation(eventId, participationDto));
         }
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(false);
     }
