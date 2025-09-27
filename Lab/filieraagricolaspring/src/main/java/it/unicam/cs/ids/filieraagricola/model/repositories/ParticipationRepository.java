@@ -6,7 +6,7 @@ import org.springframework.data.repository.ListCrudRepository;
 
 import java.util.List;
 
-public interface PartecipationRepository extends ListCrudRepository<Participation, String> {
+public interface ParticipationRepository extends ListCrudRepository<Participation, String> {
 
 
     List<Participation> findByEvent(Event event);
